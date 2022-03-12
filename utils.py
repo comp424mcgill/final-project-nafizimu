@@ -42,17 +42,18 @@ def dfs(a: Tuple[int, int], chess_board):
     stack = [StackFrame(a)]
     path = [a]
     visited = {a}
+
+    # stop if depth too high
+    stop = bool((yield path))
+    if stop:
+        raise StopIteration()
+
     while stack:
         top = stack[-1]
         a = top.a
         it = top.it
 
         try:
-            # stop if depth too high
-            stop = bool((yield path))
-            if stop:
-                raise StopIteration()
-
             # find a neighbor
             i, move = next(it)
             pos = (a[0] + move[0], a[1] + move[1])
@@ -60,6 +61,11 @@ def dfs(a: Tuple[int, int], chess_board):
                 path.append(pos)
                 visited.add(pos)
                 stack.append(StackFrame(pos))
+
+                # stop if depth too high
+                stop = bool((yield path))
+                if stop:
+                    raise StopIteration()
         except StopIteration:
             # current path exhausted
             path.pop()
