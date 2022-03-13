@@ -28,7 +28,7 @@ def all_logging_disabled(highest_level=logging.CRITICAL):
     finally:
         logging.disable(previous_level)
 
-def dfs(a: Tuple[int, int], chess_board):
+def dls(a: Tuple[int, int], chess_board, depth: int):
     MOVES: List[Tuple[int, Tuple[int, int]]] = list(
         enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
     )
@@ -43,10 +43,10 @@ def dfs(a: Tuple[int, int], chess_board):
     path = [a]
     visited = {a}
 
-    # stop if depth too high
-    stop = bool((yield path))
-    if stop:
+    if len(path) > depth:
         raise StopIteration()
+    else:
+        yield path
 
     while stack:
         top = stack[-1]
@@ -54,6 +54,9 @@ def dfs(a: Tuple[int, int], chess_board):
         it = top.it
 
         try:
+            if len(path) > depth:
+                raise StopIteration()
+
             # find a neighbor
             i, move = next(it)
             pos = (a[0] + move[0], a[1] + move[1])
@@ -61,26 +64,9 @@ def dfs(a: Tuple[int, int], chess_board):
                 path.append(pos)
                 visited.add(pos)
                 stack.append(StackFrame(pos))
-
-                # stop if depth too high
-                stop = bool((yield path))
-                if stop:
-                    raise StopIteration()
+                yield path
         except StopIteration:
             # current path exhausted
             path.pop()
             visited.remove(top.a)
             stack.pop()
-
-def dls(a: Tuple[int, int], chess_board, depth: int):
-    try:
-        paths = dfs(a, chess_board)
-        path = paths.send(None)
-        while True:
-            if len(path) > depth:
-                path = paths.send(True)
-            else:
-                yield path
-                path = paths.send(False)
-    except StopIteration:
-        pass
