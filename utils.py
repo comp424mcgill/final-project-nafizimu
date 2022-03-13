@@ -1,8 +1,5 @@
 from contextlib import contextmanager
-from enum import Enum, auto
 import logging
-import random
-from typing import List, Tuple
 
 
 @contextmanager
@@ -27,46 +24,3 @@ def all_logging_disabled(highest_level=logging.CRITICAL):
         yield
     finally:
         logging.disable(previous_level)
-
-def dls(a: Tuple[int, int], chess_board, depth: int):
-    MOVES: List[Tuple[int, Tuple[int, int]]] = list(
-        enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
-    )
-    random.shuffle(MOVES)
-
-    class StackFrame:
-        def __init__(self, a: Tuple[int, int]) -> None:
-            self.a = a
-            self.it = iter(MOVES)
-
-    stack = [StackFrame(a)]
-    path = [a]
-    visited = {a}
-
-    if len(path) > depth:
-        raise StopIteration()
-    else:
-        yield path
-
-    while stack:
-        top = stack[-1]
-        a = top.a
-        it = top.it
-
-        try:
-            if len(path) > depth:
-                raise StopIteration()
-
-            # find a neighbor
-            i, move = next(it)
-            pos = (a[0] + move[0], a[1] + move[1])
-            if not chess_board[a[0]][a[1]][i] and pos not in visited:
-                path.append(pos)
-                visited.add(pos)
-                stack.append(StackFrame(pos))
-                yield path
-        except StopIteration:
-            # current path exhausted
-            path.pop()
-            visited.remove(top.a)
-            stack.pop()
