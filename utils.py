@@ -71,3 +71,16 @@ def dfs(a: Tuple[int, int], chess_board):
             path.pop()
             visited.remove(top.a)
             stack.pop()
+
+def dls(a: Tuple[int, int], chess_board, depth: int):
+    try:
+        paths = dfs(a, chess_board)
+        path = paths.send(None)
+        while True:
+            if len(path) > depth:
+                path = paths.send(True)
+            else:
+                yield path
+                path = paths.send(False)
+    except StopIteration:
+        pass
