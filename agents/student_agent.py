@@ -42,7 +42,7 @@ class StudentAgent(Agent):
         return my_pos, self.dir_map["u"]
 
     @staticmethod
-    def dls(a: Tuple[int, int], chess_board, depth: int):
+    def dls(a: Tuple[int, int], adv_pos: Tuple[int, int], chess_board, depth: int):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
             enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
         )
@@ -74,7 +74,11 @@ class StudentAgent(Agent):
                 # find a neighbor
                 i, move = next(it)
                 pos = (a[0] + move[0], a[1] + move[1])
-                if not chess_board[a[0]][a[1]][i] and pos not in visited:
+                if (
+                    not chess_board[a[0]][a[1]][i]
+                    and pos not in visited
+                    and pos != adv_pos
+                ):
                     path.append(pos)
                     visited.add(pos)
                     stack.append(StackFrame(pos))
