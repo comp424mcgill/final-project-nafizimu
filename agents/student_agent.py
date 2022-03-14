@@ -90,7 +90,7 @@ class StudentAgent(Agent):
                 stack.pop()
 
     @staticmethod
-    def game_score(chess_board):
+    def game_score(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]):
         return None
 
     @staticmethod
@@ -108,7 +108,7 @@ class StudentAgent(Agent):
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if (score := StudentAgent.game_score(chess_board)) is not None:
+            if (score := StudentAgent.game_score(chess_board, my_pos, adv_pos)) is not None:
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is my_new_pos as can be seen at the end of the outer loop
