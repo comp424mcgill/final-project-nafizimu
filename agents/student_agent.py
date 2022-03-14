@@ -94,27 +94,45 @@ class StudentAgent(Agent):
         return None
 
     @staticmethod
-    def mcts(chess_board, my_pos, adv_pos, max_step):
-        # max_step + 1 to include root
-        lucky_valid_path = None
-        for valid_path in StudentAgent.dls(my_pos, adv_pos, chess_board, max_step + 1):
-            if lucky_valid_path is None or random.random() >= 0.5:
-                lucky_valid_path = valid_path
-        my_new_pos = lucky_valid_path[-1]
+    def mcts(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step):
+        class StackFrame:
+            def __init__(
+                self, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], dir: int = None
+            ) -> None:
+                self.my_pos = my_pos
+                self.adv_pos = adv_pos
+                self.dir = dir
 
-        lucky_dir = random.choice(
-            [
-                i
-                for i, w in enumerate(chess_board[my_new_pos[0]][my_new_pos[1]])
-                if not w
-            ]
-        )
+        stack = [StackFrame(my_pos, adv_pos)]
+        while stack:
+            my_pos = stack[-1].my_pos
+            adv_pos = stack[-1].adv_pos
 
-        chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = True
+            if (score := StudentAgent.game_score(chess_board)) is not None:
+                # undo all walls created (the first item is the initial state)
+                for item in stack[1:]:
+                    # adv_pos is my_new_pos as can be seen at the end of the outer loop
+                    chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
+                return score
 
-        score = StudentAgent.game_score(chess_board)
-        if score is None:
-            score = StudentAgent.mcts(chess_board, adv_pos, my_new_pos, max_step)
+            # max_step + 1 to include root
+            lucky_valid_path = None
+            for valid_path in StudentAgent.dls(
+                my_pos, adv_pos, chess_board, max_step + 1
+            ):
+                if lucky_valid_path is None or random.random() >= 0.5:
+                    lucky_valid_path = valid_path
+            my_new_pos = lucky_valid_path[-1]
 
-        chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = False
-        return score
+            lucky_dir = random.choice(
+                [
+                    i
+                    for i, wall in enumerate(chess_board[my_new_pos[0]][my_new_pos[1]])
+                    if not wall
+                ]
+            )
+
+            chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = True
+            stack.append(StackFrame(adv_pos, my_new_pos, lucky_dir))
+
+        raise Exception("Supposed to return score in the while loop")
