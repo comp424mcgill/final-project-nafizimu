@@ -88,3 +88,33 @@ class StudentAgent(Agent):
                 path.pop()
                 visited.remove(top.a)
                 stack.pop()
+
+    @staticmethod
+    def game_score(chess_board):
+        return None
+
+    @staticmethod
+    def mcts(chess_board, my_pos, adv_pos, max_step):
+        # max_step + 1 to include root
+        lucky_valid_path = None
+        for valid_path in StudentAgent.dls(my_pos, adv_pos, chess_board, max_step + 1):
+            if lucky_valid_path is None or random.random() >= 0.5:
+                lucky_valid_path = valid_path
+        my_new_pos = lucky_valid_path[-1]
+
+        lucky_dir = random.choice(
+            [
+                i
+                for i, w in enumerate(chess_board[my_new_pos[0]][my_new_pos[1]])
+                if not w
+            ]
+        )
+
+        chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = True
+
+        score = StudentAgent.game_score(chess_board)
+        if score is None:
+            score = StudentAgent.mcts(chess_board, adv_pos, my_new_pos, max_step)
+
+        chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = False
+        return score
