@@ -119,12 +119,11 @@ class StudentAgent(Agent):
                     chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
                 return score
 
-            # max_step + 1 to include root
             lucky_pos = random.choice(
                 [
                     path[-1]
                     for path in StudentAgent.dls(
-                        my_pos, adv_pos, chess_board, max_step + 1
+                        my_pos, adv_pos, chess_board, max_step
                     )
                 ]
             )
