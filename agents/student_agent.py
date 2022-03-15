@@ -108,7 +108,9 @@ class StudentAgent(Agent):
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if (score := StudentAgent.game_score(chess_board, my_pos, adv_pos)) is not None:
+            if (
+                score := StudentAgent.game_score(chess_board, my_pos, adv_pos)
+            ) is not None:
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is my_new_pos as can be seen at the end of the outer loop
@@ -116,12 +118,10 @@ class StudentAgent(Agent):
                 return score
 
             # max_step + 1 to include root
-            lucky_valid_path = None
-            for valid_path in StudentAgent.dls(
-                my_pos, adv_pos, chess_board, max_step + 1
-            ):
-                if lucky_valid_path is None or random.random() >= 0.5:
-                    lucky_valid_path = valid_path
+            lucky_valid_path = random.choice(
+                list(StudentAgent.dls(my_pos, adv_pos, chess_board, max_step + 1))
+            )
+
             my_new_pos = lucky_valid_path[-1]
 
             lucky_dir = random.choice(
