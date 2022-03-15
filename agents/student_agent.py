@@ -43,7 +43,10 @@ class StudentAgent(Agent):
 
     @staticmethod
     def depth_limited_search(
-        a: Tuple[int, int], adv_pos: Tuple[int, int], chess_board, depth: int
+        chess_board,
+        depth: int,
+        start: Tuple[int, int],
+        *adv_pos: Tuple[Tuple[int, int], ...],
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
             enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
@@ -51,13 +54,13 @@ class StudentAgent(Agent):
         random.shuffle(MOVES)
 
         class StackFrame:
-            def __init__(self, a: Tuple[int, int]) -> None:
-                self.a = a
+            def __init__(self, start: Tuple[int, int]) -> None:
+                self.start = start
                 self.it = iter(MOVES)
 
-        stack = [StackFrame(a)]
-        path = [a]
-        visited = {a}
+        stack = [StackFrame(start)]
+        path = [start]
+        visited = {start}
 
         if len(path) > depth:
             raise StopIteration()
@@ -66,7 +69,7 @@ class StudentAgent(Agent):
 
         while stack:
             top = stack[-1]
-            a = top.a
+            start = top.start
             it = top.it
 
             try:
@@ -75,11 +78,11 @@ class StudentAgent(Agent):
 
                 # find a neighbor
                 i, move = next(it)
-                pos = (a[0] + move[0], a[1] + move[1])
+                pos = (start[0] + move[0], start[1] + move[1])
                 if (
-                    not chess_board[a[0]][a[1]][i]
+                    not chess_board[start[0]][start[1]][i]
                     and pos not in visited
-                    and pos != adv_pos
+                    and pos not in adv_pos
                 ):
                     path.append(pos)
                     visited.add(pos)
@@ -88,7 +91,7 @@ class StudentAgent(Agent):
             except StopIteration:
                 # current path exhausted
                 path.pop()
-                visited.remove(top.a)
+                visited.remove(top.start)
                 stack.pop()
 
     @staticmethod
@@ -130,7 +133,7 @@ class StudentAgent(Agent):
                 [
                     path[-1]
                     for path in StudentAgent.depth_limited_search(
-                        my_pos, adv_pos, chess_board, max_step
+                        chess_board, max_step, my_pos, adv_pos
                     )
                 ]
             )
