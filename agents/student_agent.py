@@ -114,9 +114,12 @@ class StudentAgent(Agent):
                 score := StudentAgent.game_score(chess_board, my_pos, adv_pos)
             ) is not None:
                 # undo all walls created (the first item is the initial state)
-                for item in stack[1:]:
+                for item in stack[1:][::-1]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
                     chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
+
+                    # swap min and max
+                    score = (score[1], score[0])
                 return score
 
             lucky_pos = random.choice(
