@@ -90,7 +90,9 @@ class StudentAgent(Agent):
                 stack.pop()
 
     @staticmethod
-    def game_score(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]) -> Union[Tuple[int, int], None]:
+    def game_score(
+        chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]
+    ) -> Union[Tuple[int, int], None]:
         return None
 
     @staticmethod
@@ -113,26 +115,29 @@ class StudentAgent(Agent):
             ) is not None:
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
-                    # adv_pos is my_new_pos as can be seen at the end of the outer loop
+                    # adv_pos is lucky_pos as can be seen at the end of the outer loop
                     chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
                 return score
 
             # max_step + 1 to include root
-            lucky_valid_path = random.choice(
-                list(StudentAgent.dls(my_pos, adv_pos, chess_board, max_step + 1))
+            lucky_pos = random.choice(
+                [
+                    path[-1]
+                    for path in StudentAgent.dls(
+                        my_pos, adv_pos, chess_board, max_step + 1
+                    )
+                ]
             )
-
-            my_new_pos = lucky_valid_path[-1]
 
             lucky_dir = random.choice(
                 [
                     i
-                    for i, wall in enumerate(chess_board[my_new_pos[0]][my_new_pos[1]])
+                    for i, wall in enumerate(chess_board[lucky_pos[0]][lucky_pos[1]])
                     if not wall
                 ]
             )
 
-            chess_board[my_new_pos[0]][my_new_pos[1]][lucky_dir] = True
-            stack.append(StackFrame(adv_pos, my_new_pos, lucky_dir))
+            chess_board[lucky_pos[0]][lucky_pos[1]][lucky_dir] = True
+            stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
         raise Exception("Supposed to return score in the while loop")
