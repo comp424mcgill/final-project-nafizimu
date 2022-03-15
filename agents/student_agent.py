@@ -1,6 +1,6 @@
 # Student agent: Add your own agent here
 import random
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 from agents.agent import Agent
 from store import register_agent
 import sys
@@ -98,7 +98,41 @@ class StudentAgent(Agent):
     def game_score(
         chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]
     ) -> Union[Tuple[int, int], None]:
-        return None
+        parent: Tuple[int, int] = None
+        sets: List[List[Tuple[int, int]]] = [
+            [None] * len(chess_board[i]) for i in range(len(chess_board))
+        ]
+        counts: Dict[Tuple[int, int], int] = dict()
+        for i in range(len(chess_board)):
+            for j in range(len(chess_board[i])):
+                if parent is None:
+                    if sets[i][j] is None:
+                        # enter new territory
+                        parent = (i, j)
+                        sets[i][j] = parent
+                        counts[parent] = 0
+                    else:
+                        # explore existing and incomplete territory
+                        parent = sets[i][j]
+
+                counts[parent] += 1
+
+                # right accessible?
+                if not chess_board[i][j][1]:
+                    sets[i][j + 1] = parent
+                # down accessible?
+                if not chess_board[i][j][2]:
+                    sets[i + 1][j] = parent
+                # neither accessible
+                if chess_board[i][j][1] and chess_board[i][j][2]:
+                    parent = None
+
+        if sets[my_pos[0]][my_pos[1]] == sets[adv_pos[0]][adv_pos[1]]:
+            # game not yet over, they are still in the same territory
+            return None
+        else:
+            # return final score
+            return (counts[my_pos], counts[adv_pos])
 
     @staticmethod
     def monte_carlo_method(
