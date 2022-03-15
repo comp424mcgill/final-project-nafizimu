@@ -1,6 +1,6 @@
 # Student agent: Add your own agent here
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from agents.agent import Agent
 from store import register_agent
 import sys
@@ -90,7 +90,7 @@ class StudentAgent(Agent):
                 stack.pop()
 
     @staticmethod
-    def game_score(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]):
+    def game_score(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]) -> Union[Tuple[int, int], None]:
         return None
 
     @staticmethod
