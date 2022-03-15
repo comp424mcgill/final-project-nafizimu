@@ -42,7 +42,7 @@ class StudentAgent(Agent):
         return my_pos, self.dir_map["u"]
 
     @staticmethod
-    def dls(a: Tuple[int, int], adv_pos: Tuple[int, int], chess_board, depth: int):
+    def depth_limited_search(a: Tuple[int, int], adv_pos: Tuple[int, int], chess_board, depth: int):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
             enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
         )
@@ -96,7 +96,7 @@ class StudentAgent(Agent):
         return None
 
     @staticmethod
-    def mcts(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step):
+    def monte_carlo_method(chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step):
         class StackFrame:
             def __init__(
                 self, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], dir: int = None
@@ -122,7 +122,7 @@ class StudentAgent(Agent):
             lucky_pos = random.choice(
                 [
                     path[-1]
-                    for path in StudentAgent.dls(
+                    for path in StudentAgent.depth_limited_search(
                         my_pos, adv_pos, chess_board, max_step
                     )
                 ]
