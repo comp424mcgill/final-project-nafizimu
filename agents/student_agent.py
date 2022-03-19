@@ -153,7 +153,7 @@ class StudentAgent(Agent):
         raise Exception("Supposed to return score in the while loop")
 
     @staticmethod
-    def game_over(chess_board, my_pos, adv_pos):
+    def game_over(chess_board, my_pos, adv_pos, isAdv=False):
         directions = [
             (-1, 0),
             (0, 1),
@@ -178,7 +178,9 @@ class StudentAgent(Agent):
                 new_col = cur_pos[1] + m[1][1]
                 dir = m[0]
 
-                if (new_row, new_col) == adv_pos:
+                if (new_row, new_col) == adv_pos and not chess_board[cur_pos[0]][
+                    cur_pos[1]
+                ][dir]:
                     return None
 
                 if (
@@ -191,8 +193,12 @@ class StudentAgent(Agent):
 
         total_visited = len(checked)
 
-        return (  # return None if game not end, return (my_score, adv_score) if game ended
-            None
-            if len(checked) == total_tiles
-            else (total_visited, total_tiles - total_visited)
-        )
+        if len(checked) == total_tiles:
+            return None
+        elif not isAdv:
+            return (
+                total_visited,
+                StudentAgent.game_over(chess_board, adv_pos, my_pos, True)[0],
+            )
+        elif isAdv:
+            return (total_visited, -1)
