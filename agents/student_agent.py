@@ -3,6 +3,7 @@ import random
 from typing import List, Tuple, Union
 from agents.agent import Agent
 from store import register_agent
+import queue
 import sys
 
 
@@ -152,41 +153,46 @@ class StudentAgent(Agent):
         raise Exception("Supposed to return score in the while loop")
 
     @staticmethod
-    def game_over(chess_board, my_pos):
+    def game_over(chess_board, my_pos, adv_pos):
         directions = [
             (-1, 0),
             (0, 1),
             (1, 0),
             (0, -1),
         ]  # (0, (-1, 0)), (1, (0, 1)), etc
-        MOVES = enumerate(directions)
+        MOVES = list(enumerate(directions))
         total_tiles = len(chess_board) * len(chess_board[0])
 
-        # idea: starting at my_pos and expande the board, until the hit no way to go anymore.
-        # then check if that's the whole board, if yes, then return None, else return (my_score, total_score-myscore)
-        tocheck = [my_pos]
-        checked = dict()
+        tocheck = queue.Queue(0)
+        tocheck.put(my_pos)
 
-        while tocheck:
-            cur_pos = tocheck[0]
-            del tocheck[0]
-            checked[cur_pos] = cur_pos
+        checked = set()
+        checked.add(my_pos)
+
+        while not tocheck.empty():
+
+            cur_pos = tocheck.get()
 
             for m in MOVES:
                 new_row = cur_pos[0] + m[1][0]
                 new_col = cur_pos[1] + m[1][1]
                 dir = m[0]
 
+                if (new_row, new_col) == adv_pos:
+                    return None
+
                 if (
                     not chess_board[cur_pos[0]][cur_pos[1]][dir]
                     and (new_row, new_col) not in checked
-                ):  # no wall directly blocking and didn't check yet
-                    tocheck.append((new_row, new_col))
+                ):
+
+                    tocheck.put((new_row, new_col))
+                    checked.add((new_row, new_col))
 
         total_visited = len(checked)
 
-        return (
+        return (  # return None if game not end, return (my_score, adv_score) if game ended
             None
             if len(checked) == total_tiles
             else (total_visited, total_tiles - total_visited)
-        )  # return None if game not end, return (my_score, adv_score) if game ended
+        )
