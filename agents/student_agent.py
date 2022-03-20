@@ -198,7 +198,7 @@ class StudentAgent(Agent):
         elif not isAdv:
             return (
                 total_visited,
-                StudentAgent.game_over(chess_board, adv_pos, my_pos, True)[0],
+                StudentAgent.game_score(chess_board, adv_pos, my_pos, True)[0],
             )
         elif isAdv:
             return (total_visited, -1)
