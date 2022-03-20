@@ -5,6 +5,7 @@ from agents.agent import Agent
 from store import register_agent
 import queue
 import sys
+import math
 
 
 @register_agent("student_agent")
@@ -202,3 +203,98 @@ class StudentAgent(Agent):
             )
         elif isAdv:
             return (total_visited, -1)
+
+    @staticmethod
+    def alpha_beta_pruning(
+        chess_board,
+        my_pos,
+        adv_pos,
+        ab_depth,  # how deep ab_pruning will go
+        max_ab_depth,
+        max_step,  # max step allowed in this game
+        isMaxPlayer,
+        mcm_numbers,  # how many random simulations to do
+        alpha,  # max, start with -inf
+        beta,  # min, start with inf
+    ):
+        pathes = StudentAgent.depth_limited_search(
+            chess_board, max_step, my_pos, adv_pos
+        )
+        end_points = set()
+
+        for item in pathes:
+            end_points.add(item[-1])
+            # TODO: Add the walls
+
+        if ab_depth == 1:
+            a = alpha
+            b = beta
+
+            for item in end_points:
+                chess_board[item] = True
+                win_rate = StudentAgent.get_win_rate(
+                    chess_board, mcm_numbers, my_pos, adv_pos, max_step
+                )
+                chess_board[item] = False
+
+                if isMaxPlayer:
+                    a = win_rate if win_rate > a else a
+                    if a > beta:
+                        return (alpha, beta)
+                else:
+                    b = win_rate if win_rate < b else b
+                    if alpha > b:
+                        return (alpha, beta)
+
+            return (a, b)
+
+        else:
+            a = alpha
+            b = beta
+            best_point = end_points[0]
+
+            for item in end_points:
+                chess_board[item] = True
+                result = StudentAgent.alpha_beta_pruning(
+                    chess_board,
+                    adv_pos,
+                    item,
+                    ab_depth - 1,
+                    max_ab_depth,
+                    max_step,
+                    not isMaxPlayer,
+                    mcm_numbers,
+                    a,
+                    b,
+                )
+                chess_board[item] = False
+
+                if isMaxPlayer:
+                    if result[1] > a:
+                        a = result[1]
+                        best_point = item
+                    if a > beta:
+                        return (alpha, beta)
+                else:
+                    if result[0] < b:
+                        b = result[0]
+                        best_point = item
+                    if alpha > b:
+                        return (alpha, beta)
+
+            if ab_depth == max_ab_depth:
+                return best_point
+
+            return (a, b)
+
+    @staticmethod
+    def get_win_rate(chess_board, mcm_numbers, my_pos, adv_pos, max_step):
+        win_cnt = 0
+        for i in range(mcm_numbers):
+            result = StudentAgent.monte_carlo_method(
+                chess_board, my_pos, adv_pos, max_step
+            )
+            if result[0] > result[1]:
+                win_cnt = win_cnt + 1
+
+        return win_cnt / mcm_numbers
