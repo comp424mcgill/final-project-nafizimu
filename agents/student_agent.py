@@ -3,6 +3,7 @@ import random
 from typing import List, Tuple, Union
 from agents.agent import Agent
 from store import register_agent
+import queue
 import sys
 
 
@@ -150,3 +151,54 @@ class StudentAgent(Agent):
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
         raise Exception("Supposed to return score in the while loop")
+
+    @staticmethod
+    def game_score(chess_board, my_pos, adv_pos, isAdv=False):
+        directions = [
+            (-1, 0),
+            (0, 1),
+            (1, 0),
+            (0, -1),
+        ]  # (0, (-1, 0)), (1, (0, 1)), etc
+        MOVES = list(enumerate(directions))
+        total_tiles = len(chess_board) * len(chess_board[0])
+
+        tocheck = queue.Queue(0)
+        tocheck.put(my_pos)
+
+        checked = set()
+        checked.add(my_pos)
+
+        while not tocheck.empty():
+
+            cur_pos = tocheck.get()
+
+            for m in MOVES:
+                new_row = cur_pos[0] + m[1][0]
+                new_col = cur_pos[1] + m[1][1]
+                dir = m[0]
+
+                if (new_row, new_col) == adv_pos and not chess_board[cur_pos[0]][
+                    cur_pos[1]
+                ][dir]:
+                    return None
+
+                if (
+                    not chess_board[cur_pos[0]][cur_pos[1]][dir]
+                    and (new_row, new_col) not in checked
+                ):
+
+                    tocheck.put((new_row, new_col))
+                    checked.add((new_row, new_col))
+
+        total_visited = len(checked)
+
+        if len(checked) == total_tiles:
+            return None
+        elif not isAdv:
+            return (
+                total_visited,
+                StudentAgent.game_score(chess_board, adv_pos, my_pos, True)[0],
+            )
+        elif isAdv:
+            return (total_visited, -1)
