@@ -153,7 +153,7 @@ class StudentAgent(Agent):
         raise Exception("Supposed to return score in the while loop")
 
     @staticmethod
-    def game_over(chess_board, my_pos, adv_pos, isAdv=False):
+    def game_score(chess_board, my_pos, adv_pos, isAdv=False):
         directions = [
             (-1, 0),
             (0, 1),
