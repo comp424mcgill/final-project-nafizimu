@@ -217,26 +217,29 @@ class StudentAgent(Agent):
         alpha,  # max, start with -inf
         beta,  # min, start with inf
     ):
-        pathes = StudentAgent.depth_limited_search(
+        pathes = StudentAgent.depth_limited_search(  # get all the possible final points
             chess_board, max_step, my_pos, adv_pos
         )
-        end_points = set()
+        end_points = set()  # set of tuple ((int row, int col), int direction)
 
         for item in pathes:
-            end_points.add(item[-1])
-            # TODO: Add the walls
+            for i in range(4):  # loop to add walls
+                if not chess_board[item[-1][0]][item[-1][1]][i]:
+                    end_points.add(item[-1], i)
 
         if ab_depth == 1:
             a = alpha
             b = beta
 
             for item in end_points:
-                chess_board[item] = True
+                # Compute win rate after following 'item'
+                chess_board[item[0][0]][item[0][1]][item[1]] = True
                 win_rate = StudentAgent.get_win_rate(
                     chess_board, mcm_numbers, my_pos, adv_pos, max_step
                 )
-                chess_board[item] = False
+                chess_board[item[0][0]][item[0][1]][item[1]] = False
 
+                # update alpha and beta depend on level
                 if isMaxPlayer:
                     a = win_rate if win_rate > a else a
                     if a > beta:
@@ -254,6 +257,7 @@ class StudentAgent(Agent):
             best_point = end_points[0]
 
             for item in end_points:
+                # for each possible end point, do ab pruning on those to see which one has a better win rate
                 chess_board[item] = True
                 result = StudentAgent.alpha_beta_pruning(
                     chess_board,
@@ -262,7 +266,7 @@ class StudentAgent(Agent):
                     ab_depth - 1,
                     max_ab_depth,
                     max_step,
-                    not isMaxPlayer,
+                    not isMaxPlayer,  # flip the isMaxPlayer because it's the opponant turn.
                     mcm_numbers,
                     a,
                     b,
