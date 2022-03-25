@@ -1,11 +1,13 @@
 # Student agent: Add your own agent here
 import random
 from typing import List, Tuple, Union
+from xmlrpc.client import MAXINT
 from agents.agent import Agent
 from store import register_agent
 import queue
 import sys
 import math
+import numpy as np
 
 
 @register_agent("student_agent")
@@ -24,6 +26,7 @@ class StudentAgent(Agent):
             "d": 2,
             "l": 3,
         }
+        self.autoplay = True
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
@@ -40,8 +43,9 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        # dummy return
-        return my_pos, self.dir_map["u"]
+        return self.alpha_beta_pruning(
+            chess_board, my_pos, adv_pos, 2, 2, max_step, True, 10, -MAXINT, MAXINT
+        )
 
     @staticmethod
     def depth_limited_search(
@@ -51,7 +55,7 @@ class StudentAgent(Agent):
         *adv_pos: Tuple[Tuple[int, int], ...],
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
-            enumerate((-1, 0), (0, 1), (1, 0), (0, -1))
+            enumerate([(-1, 0), (0, 1), (1, 0), (0, -1)])
         )
         random.shuffle(MOVES)
 
@@ -85,6 +89,8 @@ class StudentAgent(Agent):
                     not chess_board[start[0]][start[1]][i]
                     and pos not in visited
                     and pos not in adv_pos
+                    and pos[0] >= 0 and pos[0] < len(chess_board)
+                    and pos[1] >= 0 and pos[1] < len(chess_board)
                 ):
                     path.append(pos)
                     visited.add(pos)
@@ -95,12 +101,6 @@ class StudentAgent(Agent):
                 path.pop()
                 visited.remove(top.start)
                 stack.pop()
-
-    @staticmethod
-    def game_score(
-        chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int]
-    ) -> Union[Tuple[int, int], None]:
-        return None
 
     @staticmethod
     def monte_carlo_method(
@@ -125,7 +125,8 @@ class StudentAgent(Agent):
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                    chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
+                    # chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
+                    StudentAgent.set_wall(chess_board, item.adv_pos, item.dir, False)
 
                     # swap min and max
                     score = (score[1], score[0])
@@ -148,7 +149,8 @@ class StudentAgent(Agent):
                 ]
             )
 
-            chess_board[lucky_pos[0]][lucky_pos[1]][lucky_dir] = True
+            StudentAgent.set_wall(chess_board, lucky_pos, lucky_dir, True)
+            # chess_board[lucky_pos[0]][lucky_pos[1]][lucky_dir] = True
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
         raise Exception("Supposed to return score in the while loop")
@@ -177,6 +179,15 @@ class StudentAgent(Agent):
             for m in MOVES:
                 new_row = cur_pos[0] + m[1][0]
                 new_col = cur_pos[1] + m[1][1]
+
+                if (
+                    new_row >= len(chess_board)
+                    or new_col >= len(chess_board[new_row])
+                    or new_row < 0
+                    or new_col < 0
+                ):
+                    continue
+
                 dir = m[0]
 
                 if (new_row, new_col) == adv_pos and not chess_board[cur_pos[0]][
@@ -193,6 +204,12 @@ class StudentAgent(Agent):
                     checked.add((new_row, new_col))
 
         total_visited = len(checked)
+
+        try:
+            if total_visited <= 1:
+                raise Exception()
+        except:
+            pass
 
         if len(checked) == total_tiles:
             return None
@@ -236,11 +253,13 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # Compute win rate after following 'item'
-                chess_board[item[0][0]][item[0][1]][item[1]] = True
+                # chess_board[item[0][0]][item[0][1]][item[1]] = True
+                StudentAgent.set_wall(chess_board, item[0], item[1], True)
                 win_rate = StudentAgent.get_win_rate(
                     chess_board, mcm_numbers, my_pos, adv_pos, max_step
                 )
-                chess_board[item[0][0]][item[0][1]][item[1]] = False
+                # chess_board[item[0][0]][item[0][1]][item[1]] = False
+                StudentAgent.set_wall(chess_board, item[0], item[1], False)
 
                 # update alpha and beta depend on level
                 if isMaxPlayer:
@@ -257,11 +276,12 @@ class StudentAgent(Agent):
         else:
             a = alpha
             b = beta
-            best_point = end_points[0]
+            best_point = next(iter(end_points))
 
             for item in end_points:
                 # for each possible end point, do ab pruning on those to see which one has a better win rate
-                chess_board[item[0][0]][item[0][1]][item[1]] = True
+                # chess_board[item[0][0]][item[0][1]][item[1]] = True
+                StudentAgent.set_wall(chess_board, item[0], item[1], True)
                 result = StudentAgent.alpha_beta_pruning(
                     chess_board,
                     adv_pos,
@@ -274,7 +294,8 @@ class StudentAgent(Agent):
                     a,
                     b,
                 )
-                chess_board[item[0][0]][item[0][1]][item[1]] = False
+                # chess_board[item[0][0]][item[0][1]][item[1]] = False
+                StudentAgent.set_wall(chess_board, item[0], item[1], False)
 
                 if isMaxPlayer:
                     if result[1] > a:
@@ -305,3 +326,18 @@ class StudentAgent(Agent):
                 win_cnt = win_cnt + 1
 
         return win_cnt / mcm_numbers
+
+    @staticmethod
+    def set_wall(chess_board, pos, dir: int, wall: bool):
+        pos = np.array(pos)
+        chess_board[pos, dir] = wall
+
+        moves = np.array([(-1, 0), (0, 1), (1, 0), (0, -1)])
+        opposites = {0: 2, 1: 3, 2: 0, 3: 1}
+
+        anti_pos = pos + moves[dir]
+        if any(anti_pos < 0) or any(anti_pos >= len(chess_board)):
+            pass
+        else:
+            anti_dir = opposites[dir]
+            chess_board[anti_pos, anti_dir] = wall
