@@ -125,7 +125,6 @@ class StudentAgent(Agent):
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                    # chess_board[item.adv_pos[0]][item.adv_pos[1]][item.dir] = False
                     StudentAgent.set_wall(chess_board, item.adv_pos, item.dir, False)
 
                     # swap min and max
@@ -150,7 +149,6 @@ class StudentAgent(Agent):
             )
 
             StudentAgent.set_wall(chess_board, lucky_pos, lucky_dir, True)
-            # chess_board[lucky_pos[0]][lucky_pos[1]][lucky_dir] = True
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
         raise Exception("Supposed to return score in the while loop")
@@ -253,12 +251,10 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # Compute win rate after following 'item'
-                # chess_board[item[0][0]][item[0][1]][item[1]] = True
                 StudentAgent.set_wall(chess_board, item[0], item[1], True)
                 win_rate = StudentAgent.get_win_rate(
                     chess_board, mcm_numbers, my_pos, adv_pos, max_step
                 )
-                # chess_board[item[0][0]][item[0][1]][item[1]] = False
                 StudentAgent.set_wall(chess_board, item[0], item[1], False)
 
                 # update alpha and beta depend on level
@@ -280,7 +276,6 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # for each possible end point, do ab pruning on those to see which one has a better win rate
-                # chess_board[item[0][0]][item[0][1]][item[1]] = True
                 StudentAgent.set_wall(chess_board, item[0], item[1], True)
                 result = StudentAgent.alpha_beta_pruning(
                     chess_board,
@@ -294,7 +289,6 @@ class StudentAgent(Agent):
                     a,
                     b,
                 )
-                # chess_board[item[0][0]][item[0][1]][item[1]] = False
                 StudentAgent.set_wall(chess_board, item[0], item[1], False)
 
                 if isMaxPlayer:
