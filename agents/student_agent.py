@@ -323,15 +323,12 @@ class StudentAgent(Agent):
 
     @staticmethod
     def set_wall(chess_board, pos, dir: int, wall: bool):
-        pos = np.array(pos)
-        chess_board[pos, dir] = wall
+        chess_board[pos[0], pos[1], dir] = wall
 
-        moves = np.array([(-1, 0), (0, 1), (1, 0), (0, -1)])
+        moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
         opposites = {0: 2, 1: 3, 2: 0, 3: 1}
 
-        anti_pos = pos + moves[dir]
-        if any(anti_pos < 0) or any(anti_pos >= len(chess_board)):
-            pass
-        else:
+        anti_pos = np.array(pos) + np.array(moves[dir])
+        if all(0 <= anti_pos) and all(anti_pos < len(chess_board)):
             anti_dir = opposites[dir]
-            chess_board[anti_pos, anti_dir] = wall
+            chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
