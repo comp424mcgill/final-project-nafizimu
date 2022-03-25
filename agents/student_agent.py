@@ -8,6 +8,7 @@ import queue
 import sys
 import math
 import numpy as np
+import heapq
 
 
 @register_agent("student_agent")
@@ -155,6 +156,9 @@ class StudentAgent(Agent):
 
     @staticmethod
     def game_score(chess_board, my_pos, adv_pos, isAdv=False):
+        def dist(a, b):
+            return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
+
         directions = [
             (-1, 0),
             (0, 1),
@@ -163,16 +167,16 @@ class StudentAgent(Agent):
         ]  # (0, (-1, 0)), (1, (0, 1)), etc
         MOVES = list(enumerate(directions))
         total_tiles = len(chess_board) * len(chess_board[0])
-
-        tocheck = queue.Queue(0)
-        tocheck.put(my_pos)
+        
+        tocheck: List[Tuple[int, Tuple[int, int]]] = []
+        heapq.heappush(tocheck, (dist(my_pos, adv_pos), my_pos))
 
         checked = set()
         checked.add(my_pos)
 
-        while not tocheck.empty():
+        while not tocheck:
 
-            cur_pos = tocheck.get()
+            _, cur_pos = heapq.heappop(tocheck)
 
             for m in MOVES:
                 new_row = cur_pos[0] + m[1][0]
@@ -197,8 +201,8 @@ class StudentAgent(Agent):
                     not chess_board[cur_pos[0]][cur_pos[1]][dir]
                     and (new_row, new_col) not in checked
                 ):
-
-                    tocheck.put((new_row, new_col))
+                    new_pos = new_row, new_col
+                    heapq.heappush(tocheck, (dist(new_pos, adv_pos), new_pos))
                     checked.add((new_row, new_col))
 
         total_visited = len(checked)
