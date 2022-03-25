@@ -222,10 +222,13 @@ class StudentAgent(Agent):
         )
         end_points = set()  # set of tuple ((int row, int col), int direction)
 
-        for item in pathes:
+        for path in pathes:
             for i in range(4):  # loop to add walls
-                if not chess_board[item[-1][0]][item[-1][1]][i]:
-                    end_points.add(item[-1], i)
+                if not chess_board[path[-1][0]][path[-1][1]][i]:
+                    end_points.add((path[-1], i))
+
+        if len(end_points) == 0:
+            return (alpha, beta)
 
         if ab_depth == 1:
             a = alpha
@@ -258,11 +261,11 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # for each possible end point, do ab pruning on those to see which one has a better win rate
-                chess_board[item] = True
+                chess_board[item[0][0]][item[0][1]][item[1]] = True
                 result = StudentAgent.alpha_beta_pruning(
                     chess_board,
                     adv_pos,
-                    item,
+                    item[0],  # my_pos
                     ab_depth - 1,
                     max_ab_depth,
                     max_step,
@@ -271,7 +274,7 @@ class StudentAgent(Agent):
                     a,
                     b,
                 )
-                chess_board[item] = False
+                chess_board[item[0][0]][item[0][1]][item[1]] = False
 
                 if isMaxPlayer:
                     if result[1] > a:
@@ -294,7 +297,7 @@ class StudentAgent(Agent):
     @staticmethod
     def get_win_rate(chess_board, mcm_numbers, my_pos, adv_pos, max_step):
         win_cnt = 0
-        for i in range(mcm_numbers):
+        for _ in range(mcm_numbers):
             result = StudentAgent.monte_carlo_method(
                 chess_board, my_pos, adv_pos, max_step
             )
