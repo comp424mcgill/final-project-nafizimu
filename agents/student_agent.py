@@ -43,7 +43,16 @@ class StudentAgent(Agent):
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
         return self.alpha_beta_pruning(
-            chess_board, my_pos, adv_pos, 2, 2, max_step, True, 10, -sys.maxsize, sys.maxsize
+            chess_board,
+            my_pos,
+            adv_pos,
+            2,
+            2,
+            max_step,
+            True,
+            10,
+            -sys.maxsize,
+            sys.maxsize,
         )
 
     def depth_limited_search(
@@ -53,9 +62,7 @@ class StudentAgent(Agent):
         start: Tuple[int, int],
         *adv_pos: Tuple[Tuple[int, int], ...],
     ):
-        MOVES: List[Tuple[int, Tuple[int, int]]] = list(
-            enumerate(self.directions)
-        )
+        MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
 
         class StackFrame:
@@ -119,9 +126,7 @@ class StudentAgent(Agent):
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if (
-                score := self.game_score(chess_board, my_pos, adv_pos)
-            ) is not None:
+            if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
@@ -308,9 +313,7 @@ class StudentAgent(Agent):
     def get_win_rate(self, chess_board, mcm_numbers, my_pos, adv_pos, max_step):
         win_cnt = 0
         for _ in range(mcm_numbers):
-            result = self.monte_carlo_method(
-                chess_board, my_pos, adv_pos, max_step
-            )
+            result = self.monte_carlo_method(chess_board, my_pos, adv_pos, max_step)
             if result[0] > result[1]:
                 win_cnt = win_cnt + 1
 
@@ -326,8 +329,10 @@ class StudentAgent(Agent):
         if all(0 <= anti_pos) and all(anti_pos < len(chess_board)):
             anti_dir = opposites[dir]
             chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
-    
-    def disjoint_sets(self, chess_board) -> Tuple[List[List[Tuple[int, int]]], Dict[Tuple[int, int], int]]:
+
+    def disjoint_sets(
+        self, chess_board
+    ) -> Tuple[List[List[Tuple[int, int]]], Dict[Tuple[int, int], int]]:
         sets: List[List[Tuple[int, int]]] = [
             [None] * len(chess_board[i]) for i in range(len(chess_board))
         ]
