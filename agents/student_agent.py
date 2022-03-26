@@ -1,4 +1,5 @@
 # Student agent: Add your own agent here
+import queue
 import random
 import sys
 from typing import Dict, List, Tuple
@@ -55,44 +56,33 @@ class StudentAgent(Agent):
             sys.maxsize,
         )
 
-    def depth_limited_search(
+    def bfs(
         self,
         chess_board,
-        depth: int,
-        start: Tuple[int, int],
+        max_step: int,
+        my_pos: Tuple[int, int],
         *adv_pos: Tuple[int, int],
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
 
-        class StackFrame:
-            def __init__(self, start: Tuple[int, int]) -> None:
-                self.start = start
-                self.it = iter(MOVES)
+        q = queue.Queue()
+        q.put((0, my_pos))
 
-        stack = [StackFrame(start)]
-        path = [start]
-        visited = {start}
+        visited = {my_pos}
 
-        if len(path) > depth:
-            raise StopIteration()
-        else:
-            yield path
+        while not q.empty():
+            step, cur_pos = q.get()
+            yield step, cur_pos
 
-        while stack:
-            top = stack[-1]
-            start = top.start
-            it = top.it
+            if step >= max_step:
+                continue
 
-            try:
-                if len(path) > depth:
-                    raise StopIteration()
-
-                # find a neighbor
-                i, move = next(it)
-                pos = (start[0] + move[0], start[1] + move[1])
+            # find neighbors
+            for i, move in MOVES:
+                pos = (cur_pos[0] + move[0], cur_pos[1] + move[1])
                 if (
-                    not chess_board[start[0]][start[1]][i]
+                    not chess_board[cur_pos[0]][cur_pos[1]][i]
                     and pos not in visited
                     and pos not in adv_pos
                     and pos[0] >= 0
@@ -100,15 +90,8 @@ class StudentAgent(Agent):
                     and pos[1] >= 0
                     and pos[1] < len(chess_board)
                 ):
-                    path.append(pos)
+                    q.put((step + 1, pos))
                     visited.add(pos)
-                    stack.append(StackFrame(pos))
-                    yield path
-            except StopIteration:
-                # current path exhausted
-                path.pop()
-                visited.remove(top.start)
-                stack.pop()
 
     def monte_carlo_method(
         self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step
@@ -138,8 +121,8 @@ class StudentAgent(Agent):
 
             lucky_pos = random.choice(
                 [
-                    path[-1]
-                    for path in self.depth_limited_search(
+                    p
+                    for _, p in self.bfs(
                         chess_board, max_step, my_pos, adv_pos
                     )
                 ]
@@ -241,15 +224,15 @@ class StudentAgent(Agent):
         alpha,  # max, start with -inf
         beta,  # min, start with inf
     ):
-        pathes = self.depth_limited_search(  # get all the possible final points
+        points = self.bfs(  # get all the possible final points
             chess_board, max_step, my_pos, adv_pos
         )
         end_points = set()  # set of tuple ((int row, int col), int direction)
 
-        for path in pathes:
+        for _, point in points:
             for i in range(4):  # loop to add walls
-                if not chess_board[path[-1][0]][path[-1][1]][i]:
-                    end_points.add((path[-1], i))
+                if not chess_board[point[0]][point[1]][i]:
+                    end_points.add((point, i))
 
         if len(end_points) == 0:
             return (alpha, beta)
