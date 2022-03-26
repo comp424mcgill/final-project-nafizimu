@@ -1,12 +1,9 @@
 # Student agent: Add your own agent here
 import random
-from typing import Any, Dict, List, Tuple, Union
-from xmlrpc.client import MAXINT
+import sys
+from typing import Dict, List, Tuple
 from agents.agent import Agent
 from store import register_agent
-import queue
-import sys
-import math
 import numpy as np
 import heapq
 
@@ -46,7 +43,7 @@ class StudentAgent(Agent):
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
         return self.alpha_beta_pruning(
-            chess_board, my_pos, adv_pos, 2, 2, max_step, True, 10, -MAXINT, MAXINT
+            chess_board, my_pos, adv_pos, 2, 2, max_step, True, 10, -sys.maxsize, sys.maxsize
         )
 
     def depth_limited_search(
