@@ -60,7 +60,7 @@ class StudentAgent(Agent):
         chess_board,
         depth: int,
         start: Tuple[int, int],
-        *adv_pos: Tuple[Tuple[int, int], ...],
+        *adv_pos: Tuple[int, int],
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
