@@ -28,6 +28,7 @@ class StudentAgent(Agent):
             "l": 3,
         }
         self.autoplay = True
+        self.directions = ((-1, 0), (0, 1), (1, 0), (0, -1))
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
@@ -56,7 +57,7 @@ class StudentAgent(Agent):
         *adv_pos: Tuple[Tuple[int, int], ...],
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
-            enumerate([(-1, 0), (0, 1), (1, 0), (0, -1)])
+            enumerate(self.directions)
         )
         random.shuffle(MOVES)
 
@@ -159,13 +160,7 @@ class StudentAgent(Agent):
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
-        directions = [
-            (-1, 0),
-            (0, 1),
-            (1, 0),
-            (0, -1),
-        ]  # (0, (-1, 0)), (1, (0, 1)), etc
-        MOVES = list(enumerate(directions))
+        MOVES = list(enumerate(self.directions))
         total_tiles = len(chess_board) * len(chess_board[0])
 
         tocheck: List[Tuple[int, Tuple[int, int]]] = []
@@ -327,7 +322,7 @@ class StudentAgent(Agent):
     def set_wall(self, chess_board, pos, dir: int, wall: bool):
         chess_board[pos[0], pos[1], dir] = wall
 
-        moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+        moves = self.directions
         opposites = {0: 2, 1: 3, 2: 0, 3: 1}
 
         anti_pos = np.array(pos) + np.array(moves[dir])
