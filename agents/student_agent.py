@@ -158,26 +158,27 @@ class StudentAgent(Agent):
 
         raise Exception("Supposed to return score in the while loop")
 
-    def game_score(self, chess_board, my_pos, adv_pos, isAdv=False):
+    def greedy_search(self, chess_board, a, b, end_at_b=False):
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
         MOVES = list(enumerate(self.directions))
-        total_tiles = len(chess_board) * len(chess_board[0])
 
         tocheck: List[Tuple[int, Tuple[int, int]]] = []
-        heapq.heappush(tocheck, (dist(my_pos, adv_pos), my_pos))
+        heapq.heappush(tocheck, (dist(a, b), a))
 
         checked = set()
-        checked.add(my_pos)
+        checked.add(a)
 
         while not tocheck:
-
             _, cur_pos = heapq.heappop(tocheck)
+
+            yield cur_pos
 
             for m in MOVES:
                 new_row = cur_pos[0] + m[1][0]
                 new_col = cur_pos[1] + m[1][1]
+                new_pos = new_row, new_col
 
                 if (
                     new_row >= len(chess_board)
@@ -189,28 +190,35 @@ class StudentAgent(Agent):
 
                 dir = m[0]
 
-                if (new_row, new_col) == adv_pos and not chess_board[cur_pos[0]][
-                    cur_pos[1]
-                ][dir]:
-                    return None
-
                 if (
                     not chess_board[cur_pos[0]][cur_pos[1]][dir]
-                    and (new_row, new_col) not in checked
+                    and new_pos not in checked
                 ):
-                    new_pos = new_row, new_col
-                    heapq.heappush(tocheck, (dist(new_pos, adv_pos), new_pos))
-                    checked.add((new_row, new_col))
+                    if end_at_b and new_pos == b:
+                        yield b
+                        return
 
-        total_visited = len(checked)
+                    heapq.heappush(tocheck, (dist(new_pos, b), new_pos))
+                    checked.add(new_pos)
 
-        try:
-            if total_visited <= 1:
-                raise Exception()
-        except:
-            pass
+    def game_score(self, chess_board, my_pos, adv_pos, isAdv=False):
+        total_tiles = len(chess_board) * len(chess_board[0])
+        total_visited = 0
 
-        if len(checked) == total_tiles:
+        for pos in self.greedy_search(chess_board, my_pos, adv_pos, end_at_b=True):
+            if pos == adv_pos:
+                return None
+
+            total_visited += 1
+
+        # try:
+        #     if total_visited <= 1:
+        #         raise Exception()
+        # except:
+        #     pass
+
+        # i may have forgotten, but this if statement makes me a bit sus...
+        if total_visited == total_tiles:
             return None
         elif not isAdv:
             return (
