@@ -1,6 +1,6 @@
 # Student agent: Add your own agent here
 import random
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 from xmlrpc.client import MAXINT
 from agents.agent import Agent
 from store import register_agent
@@ -329,3 +329,26 @@ class StudentAgent(Agent):
         if all(0 <= anti_pos) and all(anti_pos < len(chess_board)):
             anti_dir = opposites[dir]
             chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
+    
+    def disjoint_sets(self, chess_board) -> Tuple[List[List[Tuple[int, int]]], Dict[Tuple[int, int], int]]:
+        sets: List[List[Tuple[int, int]]] = [
+            [None] * len(chess_board[i]) for i in range(len(chess_board))
+        ]
+        counts: Dict[Tuple[int, int], int] = dict()
+        for i in range(len(chess_board)):
+            for j in range(len(chess_board[i])):
+                if sets[i][j] is None:
+                    # enter new territory
+                    sets[i][j] = (i, j)
+                    counts[sets[i][j]] = 0
+
+                counts[sets[i][j]] += 1
+
+                # right accessible?
+                if not chess_board[i][j][1]:
+                    sets[i][j + 1] = sets[i][j]
+                # down accessible?
+                if not chess_board[i][j][2]:
+                    sets[i + 1][j] = sets[i][j]
+
+        return sets, counts
