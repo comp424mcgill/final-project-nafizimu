@@ -1,6 +1,6 @@
 # Student agent: Add your own agent here
 import random
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 from xmlrpc.client import MAXINT
 from agents.agent import Agent
 from store import register_agent
@@ -48,8 +48,8 @@ class StudentAgent(Agent):
             chess_board, my_pos, adv_pos, 2, 2, max_step, True, 10, -MAXINT, MAXINT
         )
 
-    @staticmethod
     def depth_limited_search(
+        self,
         chess_board,
         depth: int,
         start: Tuple[int, int],
@@ -90,8 +90,10 @@ class StudentAgent(Agent):
                     not chess_board[start[0]][start[1]][i]
                     and pos not in visited
                     and pos not in adv_pos
-                    and pos[0] >= 0 and pos[0] < len(chess_board)
-                    and pos[1] >= 0 and pos[1] < len(chess_board)
+                    and pos[0] >= 0
+                    and pos[0] < len(chess_board)
+                    and pos[1] >= 0
+                    and pos[1] < len(chess_board)
                 ):
                     path.append(pos)
                     visited.add(pos)
@@ -103,9 +105,8 @@ class StudentAgent(Agent):
                 visited.remove(top.start)
                 stack.pop()
 
-    @staticmethod
     def monte_carlo_method(
-        chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step
+        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step
     ):
         class StackFrame:
             def __init__(
@@ -121,12 +122,12 @@ class StudentAgent(Agent):
             adv_pos = stack[-1].adv_pos
 
             if (
-                score := StudentAgent.game_score(chess_board, my_pos, adv_pos)
+                score := self.game_score(chess_board, my_pos, adv_pos)
             ) is not None:
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                    StudentAgent.set_wall(chess_board, item.adv_pos, item.dir, False)
+                    self.set_wall(chess_board, item.adv_pos, item.dir, False)
 
                     # swap min and max
                     score = (score[1], score[0])
@@ -135,7 +136,7 @@ class StudentAgent(Agent):
             lucky_pos = random.choice(
                 [
                     path[-1]
-                    for path in StudentAgent.depth_limited_search(
+                    for path in self.depth_limited_search(
                         chess_board, max_step, my_pos, adv_pos
                     )
                 ]
@@ -149,13 +150,12 @@ class StudentAgent(Agent):
                 ]
             )
 
-            StudentAgent.set_wall(chess_board, lucky_pos, lucky_dir, True)
+            self.set_wall(chess_board, lucky_pos, lucky_dir, True)
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
         raise Exception("Supposed to return score in the while loop")
 
-    @staticmethod
-    def game_score(chess_board, my_pos, adv_pos, isAdv=False):
+    def game_score(self, chess_board, my_pos, adv_pos, isAdv=False):
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
@@ -167,7 +167,7 @@ class StudentAgent(Agent):
         ]  # (0, (-1, 0)), (1, (0, 1)), etc
         MOVES = list(enumerate(directions))
         total_tiles = len(chess_board) * len(chess_board[0])
-        
+
         tocheck: List[Tuple[int, Tuple[int, int]]] = []
         heapq.heappush(tocheck, (dist(my_pos, adv_pos), my_pos))
 
@@ -218,13 +218,13 @@ class StudentAgent(Agent):
         elif not isAdv:
             return (
                 total_visited,
-                StudentAgent.game_score(chess_board, adv_pos, my_pos, True)[0],
+                self.game_score(chess_board, adv_pos, my_pos, True)[0],
             )
         elif isAdv:
             return (total_visited, -1)
 
-    @staticmethod
     def alpha_beta_pruning(
+        self,
         chess_board,
         my_pos,
         adv_pos,
@@ -236,7 +236,7 @@ class StudentAgent(Agent):
         alpha,  # max, start with -inf
         beta,  # min, start with inf
     ):
-        pathes = StudentAgent.depth_limited_search(  # get all the possible final points
+        pathes = self.depth_limited_search(  # get all the possible final points
             chess_board, max_step, my_pos, adv_pos
         )
         end_points = set()  # set of tuple ((int row, int col), int direction)
@@ -255,11 +255,11 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # Compute win rate after following 'item'
-                StudentAgent.set_wall(chess_board, item[0], item[1], True)
-                win_rate = StudentAgent.get_win_rate(
+                self.set_wall(chess_board, item[0], item[1], True)
+                win_rate = self.get_win_rate(
                     chess_board, mcm_numbers, my_pos, adv_pos, max_step
                 )
-                StudentAgent.set_wall(chess_board, item[0], item[1], False)
+                self.set_wall(chess_board, item[0], item[1], False)
 
                 # update alpha and beta depend on level
                 if isMaxPlayer:
@@ -280,8 +280,8 @@ class StudentAgent(Agent):
 
             for item in end_points:
                 # for each possible end point, do ab pruning on those to see which one has a better win rate
-                StudentAgent.set_wall(chess_board, item[0], item[1], True)
-                result = StudentAgent.alpha_beta_pruning(
+                self.set_wall(chess_board, item[0], item[1], True)
+                result = self.alpha_beta_pruning(
                     chess_board,
                     adv_pos,
                     item[0],  # my_pos
@@ -293,7 +293,7 @@ class StudentAgent(Agent):
                     a,
                     b,
                 )
-                StudentAgent.set_wall(chess_board, item[0], item[1], False)
+                self.set_wall(chess_board, item[0], item[1], False)
 
                 if isMaxPlayer:
                     if result[1] > a:
@@ -313,11 +313,10 @@ class StudentAgent(Agent):
 
             return (a, b)
 
-    @staticmethod
-    def get_win_rate(chess_board, mcm_numbers, my_pos, adv_pos, max_step):
+    def get_win_rate(self, chess_board, mcm_numbers, my_pos, adv_pos, max_step):
         win_cnt = 0
         for _ in range(mcm_numbers):
-            result = StudentAgent.monte_carlo_method(
+            result = self.monte_carlo_method(
                 chess_board, my_pos, adv_pos, max_step
             )
             if result[0] > result[1]:
@@ -325,8 +324,7 @@ class StudentAgent(Agent):
 
         return win_cnt / mcm_numbers
 
-    @staticmethod
-    def set_wall(chess_board, pos, dir: int, wall: bool):
+    def set_wall(self, chess_board, pos, dir: int, wall: bool):
         chess_board[pos[0], pos[1], dir] = wall
 
         moves = [(-1, 0), (0, 1), (1, 0), (0, -1)]
