@@ -76,7 +76,7 @@ class StudentAgent(Agent):
             yield step, cur_pos
 
             if step >= max_step:
-                continue
+                return
 
             # find neighbors
             for i, move in MOVES:
