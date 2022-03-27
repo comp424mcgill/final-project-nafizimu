@@ -80,18 +80,19 @@ class StudentAgent(Agent):
 
             # find neighbors
             for i, move in MOVES:
-                pos = (cur_pos[0] + move[0], cur_pos[1] + move[1])
+                new_pos = (cur_pos[0] + move[0], cur_pos[1] + move[1])
                 if (
                     not chess_board[cur_pos[0]][cur_pos[1]][i]
-                    and pos not in visited
-                    and pos not in adv_pos
-                    and pos[0] >= 0
-                    and pos[0] < len(chess_board)
-                    and pos[1] >= 0
-                    and pos[1] < len(chess_board)
+                    and new_pos not in visited
+                    and new_pos not in adv_pos
+                    and new_pos[0] >= 0
+                    and new_pos[0] < len(chess_board)
+                    and new_pos[1] >= 0
+                    and new_pos[1] < len(chess_board)
                 ):
-                    q.put((step + 1, pos))
-                    visited.add(pos)
+                    assert not all(chess_board[new_pos[0]][new_pos[1]])
+                    q.put((step + 1, new_pos))
+                    visited.add(new_pos)
 
     def monte_carlo_method(
         self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step
