@@ -66,13 +66,11 @@ class StudentAgent(Agent):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
 
-        q = queue.Queue()
-        q.put((0, my_pos))
-
+        q = [(0, my_pos)]
         visited = {my_pos}
 
-        while not q.empty():
-            step, cur_pos = q.get()
+        while q:
+            step, cur_pos = q.pop()
             step: int = step
             cur_pos: Tuple[int, int] = cur_pos
             yield step, cur_pos
@@ -93,7 +91,7 @@ class StudentAgent(Agent):
                     and new_pos[1] < len(chess_board)
                 ):
                     assert not all(chess_board[new_pos[0]][new_pos[1]])
-                    q.put((step + 1, new_pos))
+                    q.append((step + 1, new_pos))
                     visited.add(new_pos)
 
     def monte_carlo_method(
