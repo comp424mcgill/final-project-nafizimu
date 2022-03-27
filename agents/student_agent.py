@@ -90,7 +90,7 @@ class StudentAgent(Agent):
                     and new_pos[1] >= 0
                     and new_pos[1] < len(chess_board)
                 ):
-                    assert not all(chess_board[new_pos[0]][new_pos[1]])
+                    # assert not all(chess_board[new_pos[0]][new_pos[1]])
                     q.append((step + 1, new_pos))
                     visited.add(new_pos)
 
@@ -314,7 +314,7 @@ class StudentAgent(Agent):
         return win_cnt / mcm_numbers
 
     def set_wall(self, chess_board, pos, dir: int, wall: bool):
-        assert chess_board[pos[0], pos[1], dir] != wall
+        # assert chess_board[pos[0], pos[1], dir] != wall
         chess_board[pos[0], pos[1], dir] = wall
 
         moves = self.directions
@@ -323,7 +323,7 @@ class StudentAgent(Agent):
         anti_pos = np.array(pos) + np.array(moves[dir])
         anti_dir = opposites[dir]
 
-        assert chess_board[anti_pos[0], anti_pos[1], anti_dir] != wall
+        # assert chess_board[anti_pos[0], anti_pos[1], anti_dir] != wall
         chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
 
     def disjoint_sets(
