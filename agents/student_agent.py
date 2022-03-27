@@ -142,7 +142,9 @@ class StudentAgent(Agent):
 
         raise Exception("Supposed to return score in the while loop")
 
-    def greedy_search(self, chess_board, a, b, end_at_b=False):
+    def greedy_search(
+        self, chess_board, a: Tuple[int, int], b: Tuple[int, int], end_at_b=False
+    ):
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
@@ -154,7 +156,7 @@ class StudentAgent(Agent):
         checked = set()
         checked.add(a)
 
-        while not tocheck:
+        while tocheck:
             _, cur_pos = heapq.heappop(tocheck)
 
             yield cur_pos
