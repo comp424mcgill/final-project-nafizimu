@@ -28,6 +28,9 @@ class StudentAgent(Agent):
         self.autoplay = True
         self.directions = ((-1, 0), (0, 1), (1, 0), (0, -1))
 
+        self.first_round = True
+        self.total_empty = 0
+
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -43,6 +46,13 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
+        if self.first_round:
+            total_tiles = len(chess_board) ** 2
+            self.total_empty = total_tiles - sum(
+                1 for _ in self.bfs(chess_board, total_tiles, my_pos)
+            )
+            self.first_round = False
+
         return self.alpha_beta_pruning(
             chess_board,
             my_pos,
@@ -111,8 +121,21 @@ class StudentAgent(Agent):
         while stack:
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
+            my_dir = stack[-1].dir
 
-            if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
+            _, lucky_pos = next(self.bfs(chess_board, max_step, my_pos, adv_pos))
+
+            try:
+                assert not all(chess_board[lucky_pos[0]][lucky_pos[1]])
+                # pass
+            except:
+                pass
+
+            if (
+                my_dir is not None
+                and (score := self.game_score(chess_board, my_pos, my_dir, adv_pos))
+                is not None
+            ):
                 # undo all walls created (the first item is the initial state)
                 for item in stack[1:]:
                     # adv_pos is lucky_pos as can be seen at the end of the outer loop
@@ -121,15 +144,6 @@ class StudentAgent(Agent):
                     # swap min and max
                     score = (score[1], score[0])
                 return score
-
-            lucky_pos = random.choice(
-                [
-                    p
-                    for _, p in self.bfs(
-                        chess_board, max_step, my_pos, adv_pos
-                    )
-                ]
-            )
 
             lucky_dir = random.choice(
                 [
@@ -189,32 +203,29 @@ class StudentAgent(Agent):
                     heapq.heappush(tocheck, (dist(new_pos, b), new_pos))
                     checked.add(new_pos)
 
-    def game_score(self, chess_board, my_pos, adv_pos, isAdv=False):
-        total_tiles = len(chess_board) * len(chess_board[0])
-        total_visited = 0
+    def game_score(self, chess_board, my_pos, my_dir, adv_pos):
+        opposite_pos = tuple(np.array(my_pos) + np.array(self.directions[my_dir]))
 
-        for pos in self.greedy_search(chess_board, my_pos, adv_pos, end_at_b=True):
-            if pos == adv_pos:
+        total_tiles = len(chess_board) ** 2
+        total_visited = 0
+        adv_found = False
+
+        for cur_pos in self.greedy_search(
+            chess_board, opposite_pos, my_pos, end_at_b=True
+        ):
+            if cur_pos == my_pos:
                 return None
 
             total_visited += 1
 
-        # try:
-        #     if total_visited <= 1:
-        #         raise Exception()
-        # except:
-        #     pass
+            if cur_pos == adv_pos:
+                adv_found = True
 
-        # i may have forgotten, but this if statement makes me a bit sus...
-        if total_visited == total_tiles:
+        if adv_found:
+            return (total_tiles - total_visited - self.total_empty, total_visited)
+        else:
+            self.total_empty += total_visited
             return None
-        elif not isAdv:
-            return (
-                total_visited,
-                self.game_score(chess_board, adv_pos, my_pos, True)[0],
-            )
-        elif isAdv:
-            return (total_visited, -1)
 
     def alpha_beta_pruning(
         self,
@@ -249,6 +260,18 @@ class StudentAgent(Agent):
             for item in end_points:
                 # Compute win rate after following 'item'
                 self.set_wall(chess_board, item[0], item[1], True)
+                
+                if (score := self.game_score(chess_board, item[0], item[1], adv_pos)):
+                    self.set_wall(chess_board, item[0], item[1], False)
+
+                    if score[0] >= score[1]:
+                        if isMaxPlayer:
+                            return (1, beta)
+                    elif not isMaxPlayer:
+                            return (alpha, 0)
+
+                    continue
+
                 win_rate = self.get_win_rate(
                     chess_board, mcm_numbers, my_pos, adv_pos, max_step
                 )
