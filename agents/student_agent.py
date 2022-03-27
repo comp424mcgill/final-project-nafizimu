@@ -105,20 +105,24 @@ class StudentAgent(Agent):
                 self.adv_pos = adv_pos
                 self.dir = dir
 
+        consecutive_steps = len(chess_board)
+        steps = 0
         stack = [StackFrame(my_pos, adv_pos)]
         while stack:
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
-                # undo all walls created (the first item is the initial state)
-                for item in stack[1:]:
-                    # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                    self.set_wall(chess_board, item.adv_pos, item.dir, False)
+            if steps >= consecutive_steps or all(chess_board[my_pos]):
+                if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
+                    # undo all walls created (the first item is the initial state)
+                    for item in stack[1:]:
+                        # adv_pos is lucky_pos as can be seen at the end of the outer loop
+                        self.set_wall(chess_board, item.adv_pos, item.dir, False)
 
-                    # swap min and max
-                    score = (score[1], score[0])
-                return score
+                        # swap min and max
+                        score = (score[1], score[0])
+                    return score
+                steps = 0
 
             lucky_pos = random.choice(
                 [p for _, p in self.bfs(chess_board, max_step, my_pos, adv_pos)]
@@ -134,6 +138,7 @@ class StudentAgent(Agent):
 
             self.set_wall(chess_board, lucky_pos, lucky_dir, True)
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
+            steps += 1
 
         raise Exception("Supposed to return score in the while loop")
 
