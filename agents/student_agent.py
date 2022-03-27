@@ -121,12 +121,7 @@ class StudentAgent(Agent):
                 return score
 
             lucky_pos = random.choice(
-                [
-                    p
-                    for _, p in self.bfs(
-                        chess_board, max_step, my_pos, adv_pos
-                    )
-                ]
+                [p for _, p in self.bfs(chess_board, max_step, my_pos, adv_pos)]
             )
 
             lucky_dir = random.choice(
