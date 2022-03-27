@@ -1,5 +1,5 @@
 # Student agent: Add your own agent here
-import queue
+from collections import deque
 import random
 import sys
 from typing import Dict, List, Tuple
@@ -66,11 +66,11 @@ class StudentAgent(Agent):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
 
-        q = [(0, my_pos)]
+        q = deque([(0, my_pos)])
         visited = {my_pos}
 
         while q:
-            step, cur_pos = q.pop()
+            step, cur_pos = q.popleft()
             step: int = step
             cur_pos: Tuple[int, int] = cur_pos
             yield step, cur_pos
