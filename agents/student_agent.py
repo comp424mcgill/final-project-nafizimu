@@ -312,15 +312,17 @@ class StudentAgent(Agent):
         return win_cnt / mcm_numbers
 
     def set_wall(self, chess_board, pos, dir: int, wall: bool):
+        assert chess_board[pos[0], pos[1], dir] != wall
         chess_board[pos[0], pos[1], dir] = wall
 
         moves = self.directions
         opposites = {0: 2, 1: 3, 2: 0, 3: 1}
 
         anti_pos = np.array(pos) + np.array(moves[dir])
-        if all(0 <= anti_pos) and all(anti_pos < len(chess_board)):
-            anti_dir = opposites[dir]
-            chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
+        anti_dir = opposites[dir]
+
+        assert chess_board[anti_pos[0], anti_pos[1], anti_dir] != wall
+        chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
 
     def disjoint_sets(
         self, chess_board
