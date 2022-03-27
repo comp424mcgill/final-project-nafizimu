@@ -74,7 +74,7 @@ class StudentAgent(Agent):
         while not q.empty():
             step, cur_pos = q.get()
             step: int = step
-            cur_pos: Tuple[int, int]
+            cur_pos: Tuple[int, int] = cur_pos
             yield step, cur_pos
 
             if step >= max_step:
