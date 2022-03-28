@@ -61,9 +61,9 @@ class StudentAgent(Agent):
     def bfs(
         self,
         chess_board,
-        max_step: int,
         my_pos: Tuple[int, int],
-        *adv_pos: Tuple[int, int],
+        max_step: int = 100,
+        adv_pos: Tuple[int, int] = None,
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
         random.shuffle(MOVES)
@@ -86,7 +86,7 @@ class StudentAgent(Agent):
                 if (
                     not chess_board[cur_pos[0]][cur_pos[1]][i]
                     and new_pos not in visited
-                    and new_pos not in adv_pos
+                    and new_pos != adv_pos
                     and new_pos[0] >= 0
                     and new_pos[0] < len(chess_board)
                     and new_pos[1] >= 0
@@ -126,7 +126,7 @@ class StudentAgent(Agent):
                     return score
 
             lucky_pos = random.choice(
-                [p for _, p in self.bfs(chess_board, max_step, my_pos, adv_pos)]
+                [p for _, p in self.bfs(chess_board, my_pos, max_step, adv_pos)]
             )
 
             lucky_dir = random.choice(
@@ -227,7 +227,7 @@ class StudentAgent(Agent):
         beta,  # min, start with inf
     ):
         points = self.bfs(  # get all the possible final points
-            chess_board, max_step, my_pos, adv_pos
+            chess_board, my_pos, max_step, adv_pos
         )
         end_points = set()  # set of tuple ((int row, int col), int direction)
 
