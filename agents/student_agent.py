@@ -98,7 +98,7 @@ class StudentAgent(Agent):
                     visited.add(new_pos)
 
     def monte_carlo_method(
-        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step
+        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step, max_round = MAX_TILES
     ):
         class StackFrame:
             def __init__(
@@ -114,8 +114,12 @@ class StudentAgent(Agent):
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if (walls_connected) or all(chess_board[my_pos]):
-                if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
+            if (walls_connected) or all(chess_board[my_pos]) or len(stack) >= max_round:
+                score = self.game_score(chess_board, my_pos, adv_pos)
+                if not score and len(stack) >= max_round:
+                    score = (1, 1)
+
+                if score is not None:
                     # undo all walls created (the first item is the initial state)
                     for item in stack[1:]:
                         # adv_pos is lucky_pos as can be seen at the end of the outer loop
