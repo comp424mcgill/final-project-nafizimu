@@ -53,7 +53,7 @@ class StudentAgent(Agent):
             2,
             max_step,
             True,
-            10,
+            20,
             -sys.maxsize,
             sys.maxsize,
         )
@@ -120,7 +120,8 @@ class StudentAgent(Agent):
                         # adv_pos is lucky_pos as can be seen at the end of the outer loop
                         self.set_wall(chess_board, item.adv_pos, item.dir, False)
 
-                        # swap min and max
+                    # swap min and max
+                    if len(stack) % 2 == 0:
                         score = (score[1], score[0])
                     return score
 
@@ -203,9 +204,8 @@ class StudentAgent(Agent):
         #     pass
 
         # i may have forgotten, but this if statement makes me a bit sus...
-        if total_visited == total_tiles:
-            return None
-        elif not isAdv:
+        assert total_visited != total_tiles
+        if not isAdv:
             return (
                 total_visited,
                 self.game_score(chess_board, adv_pos, my_pos, True)[0],
