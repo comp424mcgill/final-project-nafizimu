@@ -3,6 +3,8 @@ from collections import deque
 import random
 import sys
 from typing import Dict, List, Tuple
+
+from matplotlib.pyplot import connect
 from agents.agent import Agent
 from store import register_agent
 import numpy as np
@@ -105,14 +107,13 @@ class StudentAgent(Agent):
                 self.adv_pos = adv_pos
                 self.dir = dir
 
-        consecutive_steps = len(chess_board)
-        steps = 0
         stack = [StackFrame(my_pos, adv_pos)]
+        walls_connected = False
         while stack:
             my_pos = stack[-1].my_pos
             adv_pos = stack[-1].adv_pos
 
-            if steps >= consecutive_steps or all(chess_board[my_pos]):
+            if (walls_connected) or all(chess_board[my_pos]):
                 if (score := self.game_score(chess_board, my_pos, adv_pos)) is not None:
                     # undo all walls created (the first item is the initial state)
                     for item in stack[1:]:
@@ -122,7 +123,6 @@ class StudentAgent(Agent):
                         # swap min and max
                         score = (score[1], score[0])
                     return score
-                steps = 0
 
             lucky_pos = random.choice(
                 [p for _, p in self.bfs(chess_board, max_step, my_pos, adv_pos)]
@@ -136,9 +136,8 @@ class StudentAgent(Agent):
                 ]
             )
 
-            self.set_wall(chess_board, lucky_pos, lucky_dir, True)
+            walls_connected = self.set_wall(chess_board, lucky_pos, lucky_dir, True)
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
-            steps += 1
 
         raise Exception("Supposed to return score in the while loop")
 
@@ -325,6 +324,29 @@ class StudentAgent(Agent):
 
         # assert chess_board[anti_pos[0], anti_pos[1], anti_dir] != wall
         chess_board[anti_pos[0], anti_pos[1], anti_dir] = wall
+
+        neighbor_l_pos = np.array(pos) + np.array(moves[(dir - 1) % 4])
+        parallel_left = (
+            chess_board[neighbor_l_pos[0], neighbor_l_pos[1], dir]
+            if all(len(chess_board) > neighbor_l_pos) and all(neighbor_l_pos >= 0)
+            else False
+        )
+        neighbor_r_pos = np.array(pos) + np.array(moves[(dir + 1) % 4])
+        parallel_right = (
+            chess_board[neighbor_r_pos[0], neighbor_r_pos[1], dir]
+            if all(len(chess_board) > neighbor_r_pos) and all(neighbor_r_pos >= 0)
+            else False
+        )
+
+        return (
+            parallel_left
+            or chess_board[pos[0], pos[1], (dir - 1) % 4] == True
+            or chess_board[anti_pos[0], anti_pos[1], (dir - 1) % 4] == True
+        ) and (
+            parallel_right
+            or chess_board[pos[0], pos[1], (dir + 1) % 4] == True
+            or chess_board[anti_pos[0], anti_pos[1], (dir + 1) % 4] == True
+        )
 
     def disjoint_sets(
         self, chess_board
