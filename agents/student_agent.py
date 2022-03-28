@@ -10,6 +10,7 @@ from store import register_agent
 import numpy as np
 import heapq
 
+MAX_TILES = 100
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
@@ -62,7 +63,7 @@ class StudentAgent(Agent):
         self,
         chess_board,
         my_pos: Tuple[int, int],
-        max_step: int = 100,
+        max_step: int = MAX_TILES,
         adv_pos: Tuple[int, int] = None,
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
