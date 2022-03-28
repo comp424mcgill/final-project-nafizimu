@@ -309,7 +309,7 @@ class StudentAgent(Agent):
         for _ in range(mcm_numbers):
             result = self.monte_carlo_method(chess_board, my_pos, adv_pos, max_step)
             if result[0] > result[1]:
-                win_cnt = win_cnt + 1
+                win_cnt = win_cnt + (result[0] > result[1]) + (result[0] == result[1]) * 0.5
 
         return win_cnt / mcm_numbers
 
