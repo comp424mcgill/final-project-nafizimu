@@ -98,7 +98,12 @@ class StudentAgent(Agent):
                     visited.add(new_pos)
 
     def monte_carlo_method(
-        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step, max_round = MAX_ROUND
+        self,
+        chess_board,
+        my_pos: Tuple[int, int],
+        adv_pos: Tuple[int, int],
+        max_step,
+        max_round=MAX_ROUND,
     ):
         class StackFrame:
             def __init__(
@@ -312,7 +317,9 @@ class StudentAgent(Agent):
         for _ in range(mcm_numbers):
             result = self.monte_carlo_method(chess_board, my_pos, adv_pos, max_step)
             if result[0] > result[1]:
-                win_cnt = win_cnt + (result[0] > result[1]) + (result[0] == result[1]) * 0.5
+                win_cnt = (
+                    win_cnt + (result[0] > result[1]) + (result[0] == result[1]) * 0.5
+                )
 
         return win_cnt / mcm_numbers
 
