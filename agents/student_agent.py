@@ -231,15 +231,14 @@ class StudentAgent(Agent):
         alpha,  # max, start with -inf
         beta,  # min, start with inf
     ):
-        points = self.bfs(  # get all the possible final points
-            chess_board, my_pos, max_step, adv_pos
-        )
-        end_points = set()  # set of tuple ((int row, int col), int direction)
-
-        for _, point in points:
-            for i in range(4):  # loop to add walls
-                if not chess_board[point[0]][point[1]][i]:
-                    end_points.add((point, i))
+        end_points = [
+            (point, i)
+            for (_, point) in self.bfs(chess_board, my_pos, max_step, adv_pos)
+            for i in range(4)
+            if not chess_board[point[0]][point[1]][i]
+        ]
+        random.shuffle(end_points)
+        end_points = end_points[:25]
 
         if len(end_points) == 0:
             return (alpha, beta)
