@@ -10,7 +10,7 @@ from store import register_agent
 import numpy as np
 import heapq
 
-MAX_TILES = 100
+MAX_ROUND = 10 * 10 * 4
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
@@ -63,7 +63,7 @@ class StudentAgent(Agent):
         self,
         chess_board,
         my_pos: Tuple[int, int],
-        max_step: int = MAX_TILES,
+        max_step: int = 100,
         adv_pos: Tuple[int, int] = None,
     ):
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(self.directions))
@@ -98,7 +98,7 @@ class StudentAgent(Agent):
                     visited.add(new_pos)
 
     def monte_carlo_method(
-        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step, max_round = MAX_TILES
+        self, chess_board, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step, max_round = MAX_ROUND
     ):
         class StackFrame:
             def __init__(
