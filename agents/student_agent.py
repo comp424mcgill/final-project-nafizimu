@@ -11,46 +11,79 @@ from agents.agent import Agent
 from store import register_agent
 import numpy as np
 import heapq
+import time
 
 MAX_ROUND = 10 * 10 * 4
+MONTE_CARLO_CNT = 10
+SCALE_CONST = np.sqrt(2)
+TWO_SEC = 2 * 10**9
+THIRTY_SEC = 30 * 10**9
 
-@total_ordering
+
+# @total_ordering
 @dataclass
 class MCTSNode:
     my_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
     adv_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
     my_dir: int = field(compare=False, default=-1)
     win: int = field(default=0)
-    draw: int = field(default=0)
+    # draw: int = field(default=0)
     round: int = field(default=0)
     parent: "MCTSNode" = field(compare=False, default=None)
     children: List["MCTSNode"] = field(compare=False, default_factory=list)
 
-    def __lt__(self, other: "MCTSNode"):
-        return self.win/self.round > other.win/self.round
-    
-    def default_policy(self, chess_board, max_step):
-        for _ in range(10):
-            adv_pos, adv_dir, adv_score = StudentAgent.monte_carlo_method(chess_board, self.adv_pos, self.my_pos, max_step)
-            
-            self.round += 1
-            self.win += adv_score[1] > adv_score[0]
-            self.draw += adv_score[0] == adv_score[1]
-            
-            key = (adv_pos, adv_dir)
-            if key not in self.children:
-                self.children[key] = MCTSNode(self, adv_pos, adv_dir, self.my_pos)
-            
-            scores[key][0] += 1
-            scores[key][1] += adv_score[0] > adv_score[1]
-            scores[key][2] += adv_score[0] == adv_score[1]
+    def default_policy(self, chess_board, max_step, isAdv):
+        d_round = 0
+        d_win = 0
 
+        for _ in range(MONTE_CARLO_CNT):
+            _, _, adv_score = StudentAgent.monte_carlo_method(
+                chess_board, self.adv_pos, self.my_pos, max_step
+            )
 
-    def tree_policy(self, chess_board, max_step):
-        pass
+            d_round += 1
+            d_win += adv_score[1] > adv_score[0]
+            # self.draw += adv_score[0] == adv_score[1]
 
-def mcts(chess_board, my_pos, adv_pos, max_step):
-    pass
+        self.round += d_round
+        d_win = d_win if not isAdv else d_round - d_win
+        self.win += d_win
+        self.back_propagation(d_round, d_win)
+
+    def tree_policy(
+        self, chess_board, max_step, isAdv
+    ):  # returns me the list of children of the best-so-far node
+        if not self.children:
+            end_points = [
+                (point, i)
+                for (_, point) in StudentAgent.bfs(
+                    chess_board, self.my_pos, max_step, self.adv_pos
+                )  # all the children all self
+                for i in range(4)
+                if not chess_board[point[0]][point[1]][i]
+            ]
+
+            for point in end_points:
+                new_child = MCTSNode(point[0], self.my_pos, point[1], parent=self)
+                new_child.default_policy(chess_board, max_step, not isAdv)
+        else:
+            best_node = self.best_child()
+            best_node.tree_policy(chess_board, max_step, not isAdv)
+
+    def back_propagation(self, d_round, d_win):
+        if self.parent:
+            self.parent.win += d_win
+            self.parent.round += d_round
+            self.parent.back_propagation(d_round, d_win)
+
+    def best_child(self):
+        def uct_cal(child: "MCTSNode"):  # cur/next_data: (win_cnt, total_round)
+            return child.win / child.round + SCALE_CONST * (
+                np.log(self.round) / child.round
+            )
+
+        return max(self.children, key=uct_cal)
+
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
@@ -87,18 +120,20 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        return StudentAgent.alpha_beta_pruning(
-            chess_board,
-            my_pos,
-            adv_pos,
-            2,
-            2,
-            max_step,
-            True,
-            20,
-            -sys.maxsize,
-            sys.maxsize,
-        )
+        # return StudentAgent.alpha_beta_pruning(
+        #     chess_board,
+        #     my_pos,
+        #     adv_pos,
+        #     2,
+        #     2,
+        #     max_step,
+        #     True,
+        #     20,
+        #     -sys.maxsize,
+        #     sys.maxsize,
+        # )
+
+        return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, TWO_SEC)
 
     @staticmethod
     def bfs(
@@ -107,7 +142,9 @@ class StudentAgent(Agent):
         max_step: int = 100,
         adv_pos: Tuple[int, int] = None,
     ):
-        MOVES: List[Tuple[int, Tuple[int, int]]] = list(enumerate(StudentAgent.directions))
+        MOVES: List[Tuple[int, Tuple[int, int]]] = list(
+            enumerate(StudentAgent.directions)
+        )
         random.shuffle(MOVES)
 
         q = deque([(0, my_pos)])
@@ -170,7 +207,9 @@ class StudentAgent(Agent):
                     # undo all walls created (the first item is the initial state)
                     for item in stack:
                         # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                        StudentAgent.set_wall(chess_board, item.adv_pos, item.dir, False)
+                        StudentAgent.set_wall(
+                            chess_board, item.adv_pos, item.dir, False
+                        )
 
                     if not stack:
                         return my_pos, 0, score
@@ -178,7 +217,7 @@ class StudentAgent(Agent):
                     # swap min and max
                     if len(stack) % 2 == 0:
                         score = (score[1], score[0])
-                    
+
                     return stack[0].my_pos, stack[0].dir, score
 
             lucky_pos = random.choice(
@@ -193,7 +232,9 @@ class StudentAgent(Agent):
                 ]
             )
 
-            walls_connected = StudentAgent.set_wall(chess_board, lucky_pos, lucky_dir, True)
+            walls_connected = StudentAgent.set_wall(
+                chess_board, lucky_pos, lucky_dir, True
+            )
             stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
 
     @staticmethod
@@ -247,7 +288,9 @@ class StudentAgent(Agent):
         total_tiles = len(chess_board) * len(chess_board[0])
         total_visited = 0
 
-        for pos in StudentAgent.greedy_search(chess_board, my_pos, adv_pos, end_at_b=True):
+        for pos in StudentAgent.greedy_search(
+            chess_board, my_pos, adv_pos, end_at_b=True
+        ):
             if pos == adv_pos:
                 return None
 
@@ -362,7 +405,9 @@ class StudentAgent(Agent):
     def get_win_rate(chess_board, mcm_numbers, my_pos, adv_pos, max_step):
         win_cnt = 0
         for _ in range(mcm_numbers):
-            _, _, result = StudentAgent.monte_carlo_method(chess_board, my_pos, adv_pos, max_step)
+            _, _, result = StudentAgent.monte_carlo_method(
+                chess_board, my_pos, adv_pos, max_step
+            )
             if result[0] > result[1]:
                 win_cnt = (
                     win_cnt + (result[0] > result[1]) + (result[0] == result[1]) * 0.5
@@ -407,9 +452,19 @@ class StudentAgent(Agent):
             or chess_board[anti_pos[0], anti_pos[1], (dir + 1) % 4] == True
         )
 
+    def mcts(chess_board, my_pos, adv_pos, max_step, run_time):
+        start_time = time.time_ns()
+        root = MCTSNode(my_pos, adv_pos)
+
+        while time.time_ns() - start_time < run_time:
+            root.tree_policy(chess_board, max_step, False)
+
+        best_point = root.best_child()
+        return (best_point.my_pos, best_point.my_dir)
+
     @staticmethod
     def disjoint_sets(
-        chess_board
+        chess_board,
     ) -> Tuple[List[List[Tuple[int, int]]], Dict[Tuple[int, int], int]]:
         sets: List[List[Tuple[int, int]]] = [
             [None] * len(chess_board[i]) for i in range(len(chess_board))
