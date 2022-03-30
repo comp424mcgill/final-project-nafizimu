@@ -1,5 +1,7 @@
 # Student agent: Add your own agent here
 from collections import deque
+from dataclasses import dataclass, field
+from functools import total_ordering
 import random
 import sys
 from typing import Dict, List, Tuple
@@ -12,21 +14,22 @@ import heapq
 
 MAX_ROUND = 10 * 10 * 4
 
+@total_ordering
+@dataclass
 class MCTSNode:
-    def __init__(self, parent: "MCTSNode", my_pos: Tuple[int, int], my_dir: int, adv_pos: Tuple[int, int]) -> None:
-        self.parent = parent
-        self.win = 0
-        self.draw = 0
-        self.round = 0
-        self.my_pos = my_pos
-        self.my_dir = my_dir
-        self.adv_pos = adv_pos
-        self.heap: List[Tuple[Tuple[int, int], int]] = []
-        self.children: Dict[Tuple[Tuple[int, int], int], "MCTSNode"] = dict()
+    my_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
+    adv_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
+    my_dir: int = field(compare=False, default=-1)
+    win: int = field(default=0)
+    draw: int = field(default=0)
+    round: int = field(default=0)
+    parent: "MCTSNode" = field(compare=False, default=None)
+    children: List["MCTSNode"] = field(compare=False, default_factory=list)
+
+    def __lt__(self, other: "MCTSNode"):
+        return self.win/self.round > other.win/self.round
     
     def default_policy(self, chess_board, max_step):
-        scores: Dict[Tuple[Tuple[int, int], int], Tuple[int, int, int]] = dict()
-
         for _ in range(10):
             adv_pos, adv_dir, adv_score = StudentAgent.monte_carlo_method(chess_board, self.adv_pos, self.my_pos, max_step)
             
@@ -41,15 +44,13 @@ class MCTSNode:
             scores[key][0] += 1
             scores[key][1] += adv_score[0] > adv_score[1]
             scores[key][2] += adv_score[0] == adv_score[1]
-            
-    
+
+
     def tree_policy(self, chess_board, max_step):
         pass
 
-def mcts(chess_board, my_pos, adv_pos, max_step, isAdv = False):
-    h: List[Tuple[Tuple[int, int], int]] = []
-    heapq.heappush(my_pos)
-
+def mcts(chess_board, my_pos, adv_pos, max_step):
+    pass
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
