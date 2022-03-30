@@ -171,6 +171,9 @@ class StudentAgent(Agent):
                         # adv_pos is lucky_pos as can be seen at the end of the outer loop
                         StudentAgent.set_wall(chess_board, item.adv_pos, item.dir, False)
 
+                    if not stack:
+                        return my_pos, 0, score
+
                     # swap min and max
                     if len(stack) % 2 == 0:
                         score = (score[1], score[0])
