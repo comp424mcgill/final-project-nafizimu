@@ -190,6 +190,21 @@ class MCTSNode:
     def __repr__(self) -> str:
         return str(self)
 
+    def tree_to_text(self, filename: str = "tree.txt"):
+        from treelib import Tree
+
+        tree = Tree()
+        stack: List[MCTSNode] = [self]
+
+        while stack:
+            top = stack.pop()
+            tree.create_node(
+                str(top), id(top), parent=id(top.parent) if top.parent else None
+            )
+            stack.extend(top.children)
+
+        tree.save2file(filename)
+
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
