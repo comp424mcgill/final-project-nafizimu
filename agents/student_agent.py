@@ -54,50 +54,53 @@ class MCTSNode:
     def tree_policy(
         self, chess_board, max_step
     ):  # returns me the list of children of the best-so-far node
-        if self.parent:
-            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
+        path = [self]
+        while path[-1].children:
+            best_node = path[-1].best_child()
+            path.append(best_node)
+            StudentAgent.set_wall(chess_board, best_node.my_pos, best_node.my_dir, True)
 
-        if self.children:
-            best_node = self.best_child()
-            best_node.tree_policy(chess_board, max_step)
+        if path[-1] is self:
+            end_points = [
+                (point, i)
+                for (_, point) in StudentAgent.bfs(
+                    chess_board, self.my_pos, max_step, self.adv_pos
+                )  # all the children all self
+                for i in range(4)
+                if not chess_board[point[0]][point[1]][i]
+            ]
+
+            for (point, i) in end_points:
+                new_child = MCTSNode(point, i, self.adv_pos, self, self.is_adv)
+                new_child.default_policy(chess_board, max_step)
+                self.children.append(new_child)
         else:
-            if not self.parent:
-                end_points = [
-                    (point, i)
-                    for (_, point) in StudentAgent.bfs(
-                        chess_board, self.my_pos, max_step, self.adv_pos
-                    )  # all the children all self
-                    for i in range(4)
-                    if not chess_board[point[0]][point[1]][i]
-                ]
+            leaf = path[-1]
 
-                for (point, i) in end_points:
-                    new_child = MCTSNode(point, i, self.adv_pos, self, self.is_adv)
-                    new_child.default_policy(chess_board, max_step)
-                    self.children.append(new_child)
-            else:
-                end_points = [
-                    (point, i)
-                    for (_, point) in StudentAgent.bfs(
-                        chess_board, self.adv_pos, max_step, self.my_pos
-                    )  # all the children all self
-                    for i in range(4)
-                    if not chess_board[point[0]][point[1]][i]
-                ]
+            end_points = [
+                (point, i)
+                for (_, point) in StudentAgent.bfs(
+                    chess_board, leaf.adv_pos, max_step, leaf.my_pos
+                )  # all the children all self
+                for i in range(4)
+                if not chess_board[point[0]][point[1]][i]
+            ]
 
-                for (point, i) in end_points:
-                    new_child = MCTSNode(point, i, self.my_pos, self, not self.is_adv)
-                    new_child.default_policy(chess_board, max_step)
-                    self.children.append(new_child)
-
-        if self.parent:
-            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
+            for (point, i) in end_points:
+                new_child = MCTSNode(point, i, leaf.my_pos, leaf, not leaf.is_adv)
+                new_child.default_policy(chess_board, max_step)
+                leaf.children.append(new_child)
+        
+        # first item is root
+        for node in path[1:]:
+            StudentAgent.set_wall(chess_board, node.my_pos, node.my_dir, False)
 
     def back_propagation(self, d_round, d_win):
-        if self.parent:
-            self.parent.win += d_win
-            self.parent.round += d_round
-            self.parent.back_propagation(d_round, d_win)
+        node = self
+        while node.parent:
+            node.parent.win += d_win
+            node.parent.round += d_round
+            node = node.parent
 
     def best_child(self):
         def uct_cal(child: "MCTSNode"):  # cur/next_data: (win_cnt, total_round)
