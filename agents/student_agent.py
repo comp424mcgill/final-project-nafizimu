@@ -1,7 +1,5 @@
 # Student agent: Add your own agent here
 from collections import deque
-from dataclasses import dataclass, field
-from functools import total_ordering
 import random
 import sys
 from typing import Dict, List, Tuple
@@ -20,55 +18,68 @@ TWO_SEC = 2 * 10**9
 THIRTY_SEC = 30 * 10**9
 
 
-# @total_ordering
-@dataclass
 class MCTSNode:
-    my_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
-    adv_pos: Tuple[int, int] = field(compare=False, default=(-1, -1))
-    my_dir: int = field(compare=False, default=-1)
-    win: int = field(default=0)
-    # draw: int = field(default=0)
-    round: int = field(default=0)
-    parent: "MCTSNode" = field(compare=False, default=None)
-    children: List["MCTSNode"] = field(compare=False, default_factory=list)
+    def __init__(self, my_pos, my_dir, adv_pos, parent=None, is_adv = False) -> None:
+        self.my_pos: Tuple[int, int] = my_pos
+        self.my_dir: int = my_dir
+        self.adv_pos: Tuple[int, int] = adv_pos
+        self.win: int = 0
+        self.round: int = 0
+        self.parent: "MCTSNode" = parent
+        self.children: List["MCTSNode"] = []
+        self.is_adv = is_adv
+        # self.is_done = False
 
-    def default_policy(self, chess_board, max_step, isAdv):
+
+    def default_policy(self, chess_board, max_step):
         d_round = 0
         d_win = 0
 
+        if self.parent:
+            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
+
         for _ in range(MONTE_CARLO_CNT):
-            _, _, adv_score = StudentAgent.monte_carlo_method(
-                chess_board, self.adv_pos, self.my_pos, max_step
+            my_score, adv_score = self.monte_carlo_method(
+                chess_board, max_step
             )
 
             d_round += 1
-            d_win += adv_score[1] > adv_score[0]
-            # self.draw += adv_score[0] == adv_score[1]
+            d_win += my_score > adv_score
+        
+        if self.parent:
+            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
 
         self.round += d_round
-        d_win = d_win if not isAdv else d_round - d_win
+        d_win = d_win if not self.is_adv else d_round - d_win
         self.win += d_win
         self.back_propagation(d_round, d_win)
 
     def tree_policy(
-        self, chess_board, max_step, isAdv
+        self, chess_board, max_step
     ):  # returns me the list of children of the best-so-far node
-        if not self.children:
+        if self.parent:
+            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
+
+        if self.children:
+            best_node = self.best_child()
+            best_node.tree_policy(chess_board, max_step)
+        else:
             end_points = [
                 (point, i)
                 for (_, point) in StudentAgent.bfs(
-                    chess_board, self.my_pos, max_step, self.adv_pos
+                    chess_board, self.adv_pos, max_step, self.my_pos
                 )  # all the children all self
                 for i in range(4)
                 if not chess_board[point[0]][point[1]][i]
             ]
 
-            for point in end_points:
-                new_child = MCTSNode(point[0], self.my_pos, point[1], parent=self)
-                new_child.default_policy(chess_board, max_step, not isAdv)
-        else:
-            best_node = self.best_child()
-            best_node.tree_policy(chess_board, max_step, not isAdv)
+            for (point, i) in end_points:
+                new_child = MCTSNode(point, i, self.my_pos, self, not self.is_adv)
+                new_child.default_policy(chess_board, max_step)
+                self.children.append(new_child)
+        
+        if self.parent:
+            StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
 
     def back_propagation(self, d_round, d_win):
         if self.parent:
@@ -83,6 +94,75 @@ class MCTSNode:
             )
 
         return max(self.children, key=uct_cal)
+
+    def monte_carlo_method(
+        self,
+        chess_board,
+        max_step,
+        max_round=MAX_ROUND,
+    ):
+        """
+        performs monte carlo method
+        assumes that chess_board[my_pos[0]][my_pos[1]][dir] == True
+        """
+        class StackFrame:
+            def __init__(
+                self, my_pos: Tuple[int, int], dir: int, adv_pos: Tuple[int, int]
+            ) -> None:
+                self.my_pos = my_pos
+                self.adv_pos = adv_pos
+                self.my_dir = dir
+
+        stack: List[StackFrame] = []
+        walls_connected = False
+
+        while True:
+            my_pos = stack[-1].adv_pos if stack else self.adv_pos
+            adv_pos = stack[-1].my_pos if stack else self.my_pos
+
+            if walls_connected or all(chess_board[my_pos]) or all(chess_board[adv_pos]) or len(stack) >= max_round:
+                score = StudentAgent.game_score(chess_board, my_pos, adv_pos)
+                
+                try:
+                    assert not (all(chess_board[my_pos]) or all(chess_board[adv_pos])) or score
+                except:
+                    StudentAgent.game_score(chess_board, my_pos, adv_pos)
+
+                if not score and len(stack) >= max_round:
+                    score = (1, 1)
+
+                if score is not None:
+                    for item in stack:
+                        StudentAgent.set_wall(
+                            chess_board, item.my_pos, item.my_dir, False
+                        )
+
+                    if not stack:
+                        return score
+
+                    # swap min and max
+                    if len(stack) % 2 == 0:
+                        score = (score[1], score[0])
+
+                    return score
+
+            lucky_pos = random.choice(
+                [p for _, p in StudentAgent.bfs(chess_board, my_pos, max_step, adv_pos)]
+            )
+
+            lucky_dir = random.choice(
+                [
+                    i
+                    for i, wall in enumerate(chess_board[lucky_pos[0]][lucky_pos[1]])
+                    if not wall
+                ]
+            )
+
+            walls_connected = StudentAgent.set_wall(
+                chess_board, lucky_pos, lucky_dir, True
+            )
+            stack.append(StackFrame(lucky_pos, lucky_dir, adv_pos))
+
 
 
 @register_agent("student_agent")
@@ -176,68 +256,6 @@ class StudentAgent(Agent):
                     visited.add(new_pos)
 
     @staticmethod
-    def monte_carlo_method(
-        chess_board,
-        my_pos: Tuple[int, int],
-        adv_pos: Tuple[int, int],
-        max_step,
-        max_round=MAX_ROUND,
-    ):
-        class StackFrame:
-            def __init__(
-                self, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], dir: int = None
-            ) -> None:
-                self.my_pos = my_pos
-                self.adv_pos = adv_pos
-                self.dir = dir
-
-        stack: List[StackFrame] = []
-        walls_connected = False
-
-        while True:
-            my_pos = stack[-1].my_pos if stack else my_pos
-            adv_pos = stack[-1].adv_pos if stack else adv_pos
-
-            if (walls_connected) or all(chess_board[my_pos]) or len(stack) >= max_round:
-                score = StudentAgent.game_score(chess_board, my_pos, adv_pos)
-                if not score and len(stack) >= max_round:
-                    score = (1, 1)
-
-                if score is not None:
-                    # undo all walls created (the first item is the initial state)
-                    for item in stack:
-                        # adv_pos is lucky_pos as can be seen at the end of the outer loop
-                        StudentAgent.set_wall(
-                            chess_board, item.adv_pos, item.dir, False
-                        )
-
-                    if not stack:
-                        return my_pos, 0, score
-
-                    # swap min and max
-                    if len(stack) % 2 == 0:
-                        score = (score[1], score[0])
-
-                    return stack[0].my_pos, stack[0].dir, score
-
-            lucky_pos = random.choice(
-                [p for _, p in StudentAgent.bfs(chess_board, my_pos, max_step, adv_pos)]
-            )
-
-            lucky_dir = random.choice(
-                [
-                    i
-                    for i, wall in enumerate(chess_board[lucky_pos[0]][lucky_pos[1]])
-                    if not wall
-                ]
-            )
-
-            walls_connected = StudentAgent.set_wall(
-                chess_board, lucky_pos, lucky_dir, True
-            )
-            stack.append(StackFrame(adv_pos, lucky_pos, lucky_dir))
-
-    @staticmethod
     def greedy_search(
         chess_board, a: Tuple[int, int], b: Tuple[int, int], end_at_b=False
     ):
@@ -302,7 +320,6 @@ class StudentAgent(Agent):
         # except:
         #     pass
 
-        # i may have forgotten, but this if statement makes me a bit sus...
         assert total_visited != total_tiles
         if not isAdv:
             return (
@@ -311,109 +328,6 @@ class StudentAgent(Agent):
             )
         elif isAdv:
             return (total_visited, -1)
-
-    @staticmethod
-    def alpha_beta_pruning(
-        chess_board,
-        my_pos,
-        adv_pos,
-        ab_depth,  # how deep ab_pruning will go
-        max_ab_depth,
-        max_step,  # max step allowed in this game
-        isMaxPlayer,
-        mcm_numbers,  # how many random simulations to do
-        alpha,  # max, start with -inf
-        beta,  # min, start with inf
-    ):
-        end_points = [
-            (point, i)
-            for (_, point) in StudentAgent.bfs(chess_board, my_pos, max_step, adv_pos)
-            for i in range(4)
-            if not chess_board[point[0]][point[1]][i]
-        ]
-        random.shuffle(end_points)
-        end_points = end_points[:25]
-
-        if len(end_points) == 0:
-            return (alpha, beta)
-
-        if ab_depth == 1:
-            a = alpha
-            b = beta
-
-            for item in end_points:
-                # Compute win rate after following 'item'
-                StudentAgent.set_wall(chess_board, item[0], item[1], True)
-                win_rate = StudentAgent.get_win_rate(
-                    chess_board, mcm_numbers, my_pos, adv_pos, max_step
-                )
-                StudentAgent.set_wall(chess_board, item[0], item[1], False)
-
-                # update alpha and beta depend on level
-                if isMaxPlayer:
-                    a = win_rate if win_rate > a else a
-                    if a > beta:
-                        return (alpha, beta)
-                else:
-                    b = win_rate if win_rate < b else b
-                    if alpha > b:
-                        return (alpha, beta)
-
-            return (a, b)
-
-        else:
-            a = alpha
-            b = beta
-            best_point = next(iter(end_points))
-
-            for item in end_points:
-                # for each possible end point, do ab pruning on those to see which one has a better win rate
-                StudentAgent.set_wall(chess_board, item[0], item[1], True)
-                result = StudentAgent.alpha_beta_pruning(
-                    chess_board,
-                    adv_pos,
-                    item[0],  # my_pos
-                    ab_depth - 1,
-                    max_ab_depth,
-                    max_step,
-                    not isMaxPlayer,  # flip the isMaxPlayer because it's the opponant turn.
-                    mcm_numbers,
-                    a,
-                    b,
-                )
-                StudentAgent.set_wall(chess_board, item[0], item[1], False)
-
-                if isMaxPlayer:
-                    if result[1] > a:
-                        a = result[1]
-                        best_point = item
-                    if a > beta:
-                        return (alpha, beta)
-                else:
-                    if result[0] < b:
-                        b = result[0]
-                        best_point = item
-                    if alpha > b:
-                        return (alpha, beta)
-
-            if ab_depth == max_ab_depth:
-                return best_point
-
-            return (a, b)
-
-    @staticmethod
-    def get_win_rate(chess_board, mcm_numbers, my_pos, adv_pos, max_step):
-        win_cnt = 0
-        for _ in range(mcm_numbers):
-            _, _, result = StudentAgent.monte_carlo_method(
-                chess_board, my_pos, adv_pos, max_step
-            )
-            if result[0] > result[1]:
-                win_cnt = (
-                    win_cnt + (result[0] > result[1]) + (result[0] == result[1]) * 0.5
-                )
-
-        return win_cnt / mcm_numbers
 
     @staticmethod
     def set_wall(chess_board, pos, dir: int, wall: bool):
@@ -454,10 +368,10 @@ class StudentAgent(Agent):
 
     def mcts(chess_board, my_pos, adv_pos, max_step, run_time):
         start_time = time.time_ns()
-        root = MCTSNode(my_pos, adv_pos)
+        root = MCTSNode(my_pos, -1, adv_pos)
 
         while time.time_ns() - start_time < run_time:
-            root.tree_policy(chess_board, max_step, False)
+            root.tree_policy(chess_board, max_step)
 
         best_point = root.best_child()
         return (best_point.my_pos, best_point.my_dir)
