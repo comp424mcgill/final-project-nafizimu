@@ -396,28 +396,3 @@ class StudentAgent(Agent):
         best_point = root.best_child()
         return (best_point.my_pos, best_point.my_dir)
 
-    @staticmethod
-    def disjoint_sets(
-        chess_board,
-    ) -> Tuple[List[List[Tuple[int, int]]], Dict[Tuple[int, int], int]]:
-        sets: List[List[Tuple[int, int]]] = [
-            [None] * len(chess_board[i]) for i in range(len(chess_board))
-        ]
-        counts: Dict[Tuple[int, int], int] = dict()
-        for i in range(len(chess_board)):
-            for j in range(len(chess_board[i])):
-                if sets[i][j] is None:
-                    # enter new territory
-                    sets[i][j] = (i, j)
-                    counts[sets[i][j]] = 0
-
-                counts[sets[i][j]] += 1
-
-                # right accessible?
-                if not chess_board[i][j][1]:
-                    sets[i][j + 1] = sets[i][j]
-                # down accessible?
-                if not chess_board[i][j][2]:
-                    sets[i + 1][j] = sets[i][j]
-
-        return sets, counts
