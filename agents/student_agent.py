@@ -19,7 +19,7 @@ THIRTY_SEC = 30 * 10**9
 
 
 class MCTSNode:
-    def __init__(self, my_pos, my_dir, adv_pos, parent=None, is_adv = False) -> None:
+    def __init__(self, my_pos, my_dir, adv_pos, parent=None, is_adv=False) -> None:
         self.my_pos: Tuple[int, int] = my_pos
         self.my_dir: int = my_dir
         self.adv_pos: Tuple[int, int] = adv_pos
@@ -30,7 +30,6 @@ class MCTSNode:
         self.is_adv = is_adv
         # self.is_done = False
 
-
     def default_policy(self, chess_board, max_step):
         d_round = 0
         d_win = 0
@@ -39,13 +38,11 @@ class MCTSNode:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
 
         for _ in range(MONTE_CARLO_CNT):
-            my_score, adv_score = self.monte_carlo_method(
-                chess_board, max_step
-            )
+            my_score, adv_score = self.monte_carlo_method(chess_board, max_step)
 
             d_round += 1
             d_win += my_score > adv_score
-        
+
         if self.parent:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
 
@@ -64,20 +61,35 @@ class MCTSNode:
             best_node = self.best_child()
             best_node.tree_policy(chess_board, max_step)
         else:
-            end_points = [
-                (point, i)
-                for (_, point) in StudentAgent.bfs(
-                    chess_board, self.adv_pos, max_step, self.my_pos
-                )  # all the children all self
-                for i in range(4)
-                if not chess_board[point[0]][point[1]][i]
-            ]
+            if not self.parent:
+                end_points = [
+                    (point, i)
+                    for (_, point) in StudentAgent.bfs(
+                        chess_board, self.my_pos, max_step, self.adv_pos
+                    )  # all the children all self
+                    for i in range(4)
+                    if not chess_board[point[0]][point[1]][i]
+                ]
 
-            for (point, i) in end_points:
-                new_child = MCTSNode(point, i, self.my_pos, self, not self.is_adv)
-                new_child.default_policy(chess_board, max_step)
-                self.children.append(new_child)
-        
+                for (point, i) in end_points:
+                    new_child = MCTSNode(point, i, self.adv_pos, self, self.is_adv)
+                    new_child.default_policy(chess_board, max_step)
+                    self.children.append(new_child)
+            else:
+                end_points = [
+                    (point, i)
+                    for (_, point) in StudentAgent.bfs(
+                        chess_board, self.adv_pos, max_step, self.my_pos
+                    )  # all the children all self
+                    for i in range(4)
+                    if not chess_board[point[0]][point[1]][i]
+                ]
+
+                for (point, i) in end_points:
+                    new_child = MCTSNode(point, i, self.my_pos, self, not self.is_adv)
+                    new_child.default_policy(chess_board, max_step)
+                    self.children.append(new_child)
+
         if self.parent:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
 
@@ -105,6 +117,7 @@ class MCTSNode:
         performs monte carlo method
         assumes that chess_board[my_pos[0]][my_pos[1]][dir] == True
         """
+
         class StackFrame:
             def __init__(
                 self, my_pos: Tuple[int, int], dir: int, adv_pos: Tuple[int, int]
@@ -120,11 +133,19 @@ class MCTSNode:
             my_pos = stack[-1].adv_pos if stack else self.adv_pos
             adv_pos = stack[-1].my_pos if stack else self.my_pos
 
-            if walls_connected or all(chess_board[my_pos]) or all(chess_board[adv_pos]) or len(stack) >= max_round:
+            if (
+                walls_connected
+                or all(chess_board[my_pos])
+                or all(chess_board[adv_pos])
+                or len(stack) >= max_round
+            ):
                 score = StudentAgent.game_score(chess_board, my_pos, adv_pos)
-                
+
                 try:
-                    assert not (all(chess_board[my_pos]) or all(chess_board[adv_pos])) or score
+                    assert (
+                        not (all(chess_board[my_pos]) or all(chess_board[adv_pos]))
+                        or score
+                    )
                 except:
                     StudentAgent.game_score(chess_board, my_pos, adv_pos)
 
@@ -162,7 +183,6 @@ class MCTSNode:
                 chess_board, lucky_pos, lucky_dir, True
             )
             stack.append(StackFrame(lucky_pos, lucky_dir, adv_pos))
-
 
 
 @register_agent("student_agent")
