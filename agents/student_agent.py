@@ -190,18 +190,22 @@ class MCTSNode:
     def __repr__(self) -> str:
         return str(self)
 
+    def dfs(self):
+        stack: List[MCTSNode] = [self]
+        while stack:
+            top = stack.pop()
+            yield top
+            stack.extend(top.children)
+
     def tree_to_text(self, filename: str = "tree.txt"):
         from treelib import Tree
 
         tree = Tree()
-        stack: List[MCTSNode] = [self]
 
-        while stack:
-            top = stack.pop()
+        for node in self.dfs():
             tree.create_node(
-                str(top), id(top), parent=id(top.parent) if top.parent else None
+                str(node), id(node), parent=id(node.parent) if node.parent else None
             )
-            stack.extend(top.children)
 
         tree.save2file(filename)
 
@@ -416,4 +420,3 @@ class StudentAgent(Agent):
 
         best_point = root.best_child()
         return (best_point.my_pos, best_point.my_dir)
-
