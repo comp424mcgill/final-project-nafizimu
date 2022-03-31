@@ -189,6 +189,9 @@ class MCTSNode:
 
     def __repr__(self) -> str:
         return str(self)
+    
+    def __str_for_node(self):
+        return f"{self.my_pos} {self.my_dir} vs. {self.adv_pos}\n{self.win}/{self.round}"
 
     def dfs(self):
         stack: List[MCTSNode] = [self]
@@ -217,7 +220,7 @@ class MCTSNode:
         dot.attr(ranksep="1")
 
         for node in self.dfs():
-            dot.node(str(id(node)), str(node))
+            dot.node(str(id(node)), node.__str_for_node())
             if node.parent:
                 dot.edge(str(id(node.parent)), str(id(node)))
 
