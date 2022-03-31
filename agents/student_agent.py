@@ -209,6 +209,20 @@ class MCTSNode:
 
         tree.save2file(filename)
 
+    def to_svg(self, filename: str = "tree"):
+        import graphviz
+
+        dot = graphviz.Digraph()
+        dot.attr(overlap="false")
+        dot.attr(ranksep="1")
+
+        for node in self.dfs():
+            dot.node(str(id(node)), str(node))
+            if node.parent:
+                dot.edge(str(id(node.parent)), str(id(node)))
+
+        dot.render(filename, cleanup=True, format="svg")
+
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
