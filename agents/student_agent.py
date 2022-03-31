@@ -184,6 +184,12 @@ class MCTSNode:
             )
             stack.append(StackFrame(lucky_pos, lucky_dir, adv_pos))
 
+    def __str__(self) -> str:
+        return f"{self.my_pos}:{self.my_dir}:{self.adv_pos}:{self.is_adv}:{self.win}/{self.round}"
+
+    def __repr__(self) -> str:
+        return str(self)
+
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
