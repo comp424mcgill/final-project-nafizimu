@@ -69,8 +69,9 @@ class MCTSNode:
                 for i in range(4)
                 if not chess_board[point[0]][point[1]][i]
             ]
+            random.shuffle(end_points)
 
-            for (point, i) in end_points:
+            for (point, i) in end_points[: len(end_points) // 2]:
                 new_child = MCTSNode(point, i, self.adv_pos, self, self.is_adv)
                 new_child.default_policy(chess_board, max_step)
                 self.children.append(new_child)
@@ -85,12 +86,13 @@ class MCTSNode:
                 for i in range(4)
                 if not chess_board[point[0]][point[1]][i]
             ]
+            random.shuffle(end_points)
 
-            for (point, i) in end_points:
+            for (point, i) in end_points[: len(end_points) // 2]:
                 new_child = MCTSNode(point, i, leaf.my_pos, leaf, not leaf.is_adv)
                 new_child.default_policy(chess_board, max_step)
                 leaf.children.append(new_child)
-        
+
         # first item is root
         for node in path[1:]:
             StudentAgent.set_wall(chess_board, node.my_pos, node.my_dir, False)
