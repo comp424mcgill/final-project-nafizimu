@@ -194,9 +194,11 @@ class MCTSNode:
 
     def __repr__(self) -> str:
         return str(self)
-    
+
     def __str_for_node(self):
-        return f"{self.my_pos} {self.my_dir} vs. {self.adv_pos}\n{self.win}/{self.round}"
+        return (
+            f"{self.my_pos} {self.my_dir} vs. {self.adv_pos}\n{self.win}/{self.round}"
+        )
 
     def dfs(self):
         stack: List[MCTSNode] = [self]
