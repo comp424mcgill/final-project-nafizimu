@@ -38,7 +38,7 @@ class MCTSNode:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
 
         for _ in range(MONTE_CARLO_CNT):
-            my_score, adv_score = self.monte_carlo_method(chess_board, max_step)
+            adv_score, my_score = self.monte_carlo_method(chess_board, max_step)
 
             d_round += 1
             d_win += my_score > adv_score
@@ -106,9 +106,11 @@ class MCTSNode:
 
     def best_child(self):
         def uct_cal(child: "MCTSNode"):  # cur/next_data: (win_cnt, total_round)
-            return child.win / child.round + SCALE_CONST * (
-                np.log(self.round) / child.round
-            )
+            # return child.win / child.round + SCALE_CONST * (
+            #     np.log(self.round) / child.round
+            # )
+
+            return child.win / child.round
 
         return max(self.children, key=uct_cal)
 
@@ -132,7 +134,7 @@ class MCTSNode:
                 self.my_dir = dir
 
         stack: List[StackFrame] = []
-        walls_connected = False
+        walls_connected = True
 
         while True:
             my_pos = stack[-1].adv_pos if stack else self.adv_pos
@@ -145,14 +147,6 @@ class MCTSNode:
                 or len(stack) >= max_round
             ):
                 score = StudentAgent.game_score(chess_board, my_pos, adv_pos)
-
-                try:
-                    assert (
-                        not (all(chess_board[my_pos]) or all(chess_board[adv_pos]))
-                        or score
-                    )
-                except:
-                    StudentAgent.game_score(chess_board, my_pos, adv_pos)
 
                 if not score and len(stack) >= max_round:
                     score = (1, 1)
@@ -167,7 +161,7 @@ class MCTSNode:
                         return score
 
                     # swap min and max
-                    if len(stack) % 2 == 0:
+                    if len(stack) % 2 == 1:
                         score = (score[1], score[0])
 
                     return score
@@ -440,6 +434,8 @@ class StudentAgent(Agent):
         root = MCTSNode(my_pos, -1, adv_pos)
 
         while time.time_ns() - start_time < run_time:
+            # while True:
+            root.to_svg()
             root.tree_policy(chess_board, max_step)
 
         best_point = root.best_child()
