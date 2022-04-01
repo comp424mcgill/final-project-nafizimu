@@ -13,13 +13,16 @@ import time
 
 MAX_ROUND = 10 * 10 * 4
 MONTE_CARLO_CNT = 10
-SCALE_CONST = np.sqrt(2)
+UCT_CONST = np.sqrt(2)
 TWO_SEC = 2 * 10**9
 THIRTY_SEC = 30 * 10**9
+MIN_BRANCH = 5
 
 
 class MCTSNode:
-    def __init__(self, my_pos, my_dir, adv_pos, parent=None, is_adv=False) -> None:
+    def __init__(
+        self, my_pos, my_dir, adv_pos, chess_board, max_step, parent=None, is_adv=False
+    ) -> None:
         self.my_pos: Tuple[int, int] = my_pos
         self.my_dir: int = my_dir
         self.adv_pos: Tuple[int, int] = adv_pos
@@ -28,20 +31,23 @@ class MCTSNode:
         self.parent: "MCTSNode" = parent
         self.children: List["MCTSNode"] = []
         self.is_adv = is_adv
-        # self.is_done = False
+        self.score: Tuple[int, int] = None
 
-    def default_policy(self, chess_board, max_step):
         d_round = 0
         d_win = 0
 
         if self.parent:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
 
-        for _ in range(MONTE_CARLO_CNT):
-            adv_score, my_score = self.monte_carlo_method(chess_board, max_step)
-
-            d_round += 1
-            d_win += my_score > adv_score
+        self.score = StudentAgent.game_score(chess_board, self.my_pos, self.adv_pos)
+        if self.score:
+            d_round += MONTE_CARLO_CNT
+            d_win += (self.score[0] > self.score[1]) * MONTE_CARLO_CNT
+        else:
+            for _ in range(MONTE_CARLO_CNT):
+                adv_score, my_score = self.monte_carlo_method(chess_board, max_step)
+                d_round += 1
+                d_win += my_score > adv_score
 
         if self.parent:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, False)
@@ -71,9 +77,10 @@ class MCTSNode:
             ]
             random.shuffle(end_points)
 
-            for (point, i) in end_points[: len(end_points) // 2]:
-                new_child = MCTSNode(point, i, self.adv_pos, self, self.is_adv)
-                new_child.default_policy(chess_board, max_step)
+            for (point, i) in end_points[: max(len(end_points) // 2, MIN_BRANCH)]:
+                new_child = MCTSNode(
+                    point, i, self.adv_pos, chess_board, max_step, self, self.is_adv
+                )
                 self.children.append(new_child)
         else:
             leaf = path[-1]
@@ -88,9 +95,10 @@ class MCTSNode:
             ]
             random.shuffle(end_points)
 
-            for (point, i) in end_points[: len(end_points) // 2]:
-                new_child = MCTSNode(point, i, leaf.my_pos, leaf, not leaf.is_adv)
-                new_child.default_policy(chess_board, max_step)
+            for (point, i) in end_points[: max(len(end_points) // 2, MIN_BRANCH)]:
+                new_child = MCTSNode(
+                    point, i, leaf.my_pos, chess_board, max_step, leaf, not leaf.is_adv
+                )
                 leaf.children.append(new_child)
 
         # first item is root
@@ -104,13 +112,14 @@ class MCTSNode:
             node.parent.round += d_round
             node = node.parent
 
-    def best_child(self):
+    def best_child(self, greedy=False):
         def uct_cal(child: "MCTSNode"):  # cur/next_data: (win_cnt, total_round)
-            # return child.win / child.round + SCALE_CONST * (
-            #     np.log(self.round) / child.round
-            # )
-
-            return child.win / child.round
+            if greedy:
+                return child.win / child.round
+            else:
+                return child.win / child.round + UCT_CONST * np.sqrt(
+                    np.log(self.round) / child.round
+                ) * (not child.score)
 
         return max(self.children, key=uct_cal)
 
@@ -423,12 +432,12 @@ class StudentAgent(Agent):
 
     def mcts(chess_board, my_pos, adv_pos, max_step, run_time):
         start_time = time.time_ns()
-        root = MCTSNode(my_pos, -1, adv_pos)
+        root = MCTSNode(my_pos, -1, adv_pos, chess_board, max_step)
 
         while time.time_ns() - start_time < run_time:
             # while True:
             root.to_svg()
             root.tree_policy(chess_board, max_step)
 
-        best_point = root.best_child()
+        best_point = root.best_child(True)
         return (best_point.my_pos, best_point.my_dir)
