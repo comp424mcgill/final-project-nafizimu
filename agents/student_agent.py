@@ -319,24 +319,22 @@ class StudentAgent(Agent):
                     visited.add(new_pos)
 
     @staticmethod
-    def greedy_search(
-        chess_board, a: Tuple[int, int], b: Tuple[int, int], end_at_b=False
-    ):
+    def greedy_search(chess_board, a: Tuple[int, int], b: Tuple[int, int]):
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
         MOVES = list(enumerate(StudentAgent.directions))
 
-        tocheck: List[Tuple[int, Tuple[int, int]]] = []
-        heapq.heappush(tocheck, (dist(a, b), a))
+        tocheck: List[Tuple[int, int, Tuple[int, int]]] = []
+        heapq.heappush(tocheck, (dist(a, b), 0, a))
 
         checked = set()
         checked.add(a)
 
         while tocheck:
-            _, cur_pos = heapq.heappop(tocheck)
+            _, step, cur_pos = heapq.heappop(tocheck)
 
-            yield cur_pos
+            yield (step, cur_pos)
 
             for m in MOVES:
                 new_row = cur_pos[0] + m[1][0]
@@ -357,11 +355,7 @@ class StudentAgent(Agent):
                     not chess_board[cur_pos[0]][cur_pos[1]][dir]
                     and new_pos not in checked
                 ):
-                    if end_at_b and new_pos == b:
-                        yield b
-                        return
-
-                    heapq.heappush(tocheck, (dist(new_pos, b), new_pos))
+                    heapq.heappush(tocheck, (dist(new_pos, b), step + 1, new_pos))
                     checked.add(new_pos)
 
     @staticmethod
@@ -369,9 +363,7 @@ class StudentAgent(Agent):
         total_tiles = len(chess_board) * len(chess_board[0])
         total_visited = 0
 
-        for pos in StudentAgent.greedy_search(
-            chess_board, my_pos, adv_pos, end_at_b=True
-        ):
+        for (_, pos) in StudentAgent.greedy_search(chess_board, my_pos, adv_pos):
             if pos == adv_pos:
                 return None
 
