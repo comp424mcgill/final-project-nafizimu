@@ -60,7 +60,7 @@ class MCTSNode:
             path.append(best_node)
             StudentAgent.set_wall(chess_board, best_node.my_pos, best_node.my_dir, True)
 
-        if path[-1] is self:
+        if not path[-1].parent:
             end_points = [
                 (point, i)
                 for (_, point) in StudentAgent.bfs(
