@@ -14,8 +14,8 @@ import time
 MAX_ROUND = 10 * 10 * 4
 MONTE_CARLO_CNT = 10
 UCT_CONST = np.sqrt(2)
-TWO_SEC = 2 * 10**9
-THIRTY_SEC = 30 * 10**9
+TWO_SEC = (2 * 8 * 10**9) // 10
+THIRTY_SEC = (30 * 9 * 10**9) // 10
 MIN_BRANCH = 5
 
 
@@ -256,6 +256,7 @@ class StudentAgent(Agent):
             "l": 3,
         }
         self.autoplay = True
+        self.is_first_round = True
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
@@ -285,7 +286,11 @@ class StudentAgent(Agent):
         #     sys.maxsize,
         # )
 
-        return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, TWO_SEC)
+        if self.is_first_round:
+            self.is_first_round = False
+            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, THIRTY_SEC)
+        else:
+            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, TWO_SEC)
 
     @staticmethod
     def bfs(
@@ -438,6 +443,8 @@ class StudentAgent(Agent):
             # while True:
             root.to_svg()
             root.tree_policy(chess_board, max_step)
+
+        print("time: " + str((time.time_ns() - start_time) / (10**9)))
 
         best_point = root.best_child(True)
         return (best_point.my_pos, best_point.my_dir)
