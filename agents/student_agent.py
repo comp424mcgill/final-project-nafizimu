@@ -82,6 +82,8 @@ class MCTSNode:
                     point, i, self.adv_pos, chess_board, max_step, self, self.is_adv
                 )
                 self.children.append(new_child)
+                if time.time_ns() >= StudentAgent.end_time:
+                    return
         else:
             leaf = path[-1]
 
@@ -100,6 +102,8 @@ class MCTSNode:
                     point, i, leaf.my_pos, chess_board, max_step, leaf, not leaf.is_adv
                 )
                 leaf.children.append(new_child)
+                if time.time_ns() >= StudentAgent.end_time:
+                    return
 
         # first item is root
         for node in path[1:]:
@@ -245,6 +249,7 @@ class StudentAgent(Agent):
     """
 
     directions = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    end_time = 0
 
     def __init__(self):
         super(StudentAgent, self).__init__()
@@ -288,9 +293,11 @@ class StudentAgent(Agent):
 
         if self.is_first_round:
             self.is_first_round = False
-            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, THIRTY_SEC)
+            StudentAgent.end_time = time.time_ns() + THIRTY_SEC
+            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step)
         else:
-            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step, TWO_SEC)
+            StudentAgent.end_time = time.time_ns() + TWO_SEC
+            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step)
 
     @staticmethod
     def bfs(
@@ -435,11 +442,11 @@ class StudentAgent(Agent):
             or chess_board[anti_pos[0], anti_pos[1], (dir + 1) % 4] == True
         )
 
-    def mcts(chess_board, my_pos, adv_pos, max_step, run_time):
+    def mcts(chess_board, my_pos, adv_pos, max_step):
         start_time = time.time_ns()
         root = MCTSNode(my_pos, -1, adv_pos, chess_board, max_step)
 
-        while time.time_ns() - start_time < run_time:
+        while time.time_ns() < StudentAgent.end_time:
             # while True:
             root.to_svg()
             root.tree_policy(chess_board, max_step)
