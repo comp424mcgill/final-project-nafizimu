@@ -442,6 +442,7 @@ class StudentAgent(Agent):
             or chess_board[anti_pos[0], anti_pos[1], (dir + 1) % 4] == True
         )
 
+    @staticmethod
     def mcts(chess_board, my_pos, adv_pos, max_step):
         start_time = time.time_ns()
         root = MCTSNode(my_pos, -1, adv_pos, chess_board, max_step)
