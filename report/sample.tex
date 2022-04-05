@@ -68,6 +68,29 @@ the assumption is that if both ends are not connected, then no new region is cre
 The \texttt{StudentAgent.mcts} method is a static method that performs Monte-Carlo Tree Search using \texttt{MCTSNode} until the time limit.
 After the time limit is reached, it will return the most optimal next position and direction discovered.
 
+\subsection{\texttt{MCTSNode}}
+
+\texttt{MCTSNode} represents a node in a Monte-Carlo Tree Search.
+It could either be the root of the tree, or the children.
+It consists of methods such as \texttt{\_\_init\_\_}, \texttt{tree\_policy}, \texttt{back\_propagation}, \texttt{best\_child} and \texttt{monte\_carlo\_method}.
+
+\texttt{\_\_init\_\_} not only initializes fields but also performs default policy.
+The purpose of performing default policy is to determine if the node can no longer be expanded.
+This allows the tree policy to expand other nodes that are not finished.
+
+\texttt{tree\_policy} performs the tree policy of MCTS to update the score of the nodes along the most promising nodes.
+
+\texttt{back\_propagation} performs the back propagation to update the score of predecessors during a default policy of MCTS.
+
+\texttt{best\_child} returns the best direct child of an \texttt{MCTSNode}.
+If the \texttt{greedy} argument is \texttt{False}, then it will pick the child with the highest win/round ratio;
+otherwise, it will perform Upper Confidence Tree with a scaling constant of \(\sqrt{2}\) to maintain balance between exploration and exploitation.
+\texttt{greedy} is \texttt{True} when performing default policy, and \texttt{False} when picking the best next position and direction at the end of MCTS.
+
+\texttt{monte\_carlo\_method} performs a single Monte-Carlo method and returns the score of the simulation.
+
+There have been some consistent strategies we have applied to minimize overheads of simulating multiple games with default policy, \texttt{tree\_policy} and \texttt{monte\_carlo\_method}. For example, we would modify the original copy of the chessboard and then undo the changes to avoid overhead related to copying large data. We also perform iteration instead of recursion to avoid stack overflow and some overheads related to managing call stack.
+
 \section{Theory}
 
 \section{Analysis}
