@@ -31,7 +31,42 @@
 \maketitle
 
 \section{Introduction}
-% how program works and what are the motivation of the approach
+
+Our agent is a Python module named \texttt{student\_agent.py} that consists of classes called \texttt{MCTSNode} and \texttt{StudentAgent}.
+
+\subsection{\texttt{StudentAgent}}
+
+\texttt{StudentAgent} is the entry point of the module for the \textit{Colosseum Survival!} game.
+It consists of the \texttt{\_\_init\_\_} method to construct the agent, helper functions, global variables, and a \texttt{step} method.
+
+\texttt{\_\_init\_\_} initializes variables including \texttt{self.is\_first\_round} which is \texttt{True} if the current turn is the first turn.
+
+The \texttt{step} method is one of the public interface for the \textit{Colosseum Survival!} game to make a decision for a single turn.
+The method sets \texttt{StudentAgent.end\_time} to the time when the MCTS should stop searching, calls \texttt{StudentAgent.mcts}, and then returns the most optimal next position and direction discovered.
+
+The \texttt{StudentAgent.bfs} is a static method that performs Breadth-First Search.
+It returns a generator that returns a sequence of \texttt{(number of steps, point)} where the points are legally accessible from the starting point within the maximum step.
+If given the adversary's position, it will not visit the adversary's position.
+This function is used to find all the legally accessible points for the player at the starting point.
+
+The \texttt{StudentAgent.greedy\_search} method is a static method that performs a greedy search.
+It is greedy because it uses min-heap to prioritize points that are closest to the adversary's point in terms of Manhattan distance.
+It also cannot pass through walls, but it ignores the maximum step.
+This function serves two purpose: to determine whether both players are on the same region, or to return all the points that are within the same region as the starting point.
+The purpose of making the function greedy is to stop calculating the score of a chessboard as soon as it is discovered that both players are still in the same region.
+
+The \texttt{StudentAgent.game\_score} method is a static method that calculates the score of the chessboard.
+It returns a \texttt{tuple} where the first value is score of the first player, and the second value is the score of the second player;
+otherwise it returns \texttt{None} if both players are on the same region.
+The method uses \texttt{greedy\_search} to not only explore the region of the players and calculate their score, but also to determine if both players are on the same region much sooner.
+
+The \texttt{StudentAgent.set\_wall} method is a static method to set the value of a wall in a chessboard.
+The method serves two purpose: to conveniently set a wall at opposite sides, and to return \texttt{True} if the wall placed is connected to other walls on both ends of the wall.
+The purpose of the latter is to reduce the number of calls to \texttt{StudentAgent.game\_score} in a Monte-Carlo method;
+the assumption is that if both ends are not connected, then no new region is created, so the score would be the exact same as previous turn.
+
+The \texttt{StudentAgent.mcts} method is a static method that performs Monte-Carlo Tree Search using \texttt{MCTSNode} until the time limit.
+After the time limit is reached, it will return the most optimal next position and direction discovered.
 
 \section{Theory}
 
