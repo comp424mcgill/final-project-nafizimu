@@ -196,23 +196,23 @@ class MCTSNode:
             )
             stack.append(StackFrame(lucky_pos, lucky_dir, adv_pos))
 
-    def __str__(self) -> str:
-        return f"{self.my_pos}:{self.my_dir}:{self.adv_pos}:{self.is_adv}:{self.win}/{self.round}"
+    # def __str__(self) -> str:
+    #     return f"{self.my_pos}:{self.my_dir}:{self.adv_pos}:{self.is_adv}:{self.win}/{self.round}"
 
-    def __repr__(self) -> str:
-        return str(self)
+    # def __repr__(self) -> str:
+    #     return str(self)
 
-    def __str_for_node(self):
-        return (
-            f"{self.my_pos} {self.my_dir} vs. {self.adv_pos}\n{self.win}/{self.round}"
-        )
+    # def __str_for_node(self):
+    #     return (
+    #         f"{self.my_pos} {self.my_dir} vs. {self.adv_pos}\n{self.win}/{self.round}"
+    #     )
 
-    def dfs(self):
-        stack: List[MCTSNode] = [self]
-        while stack:
-            top = stack.pop()
-            yield top
-            stack.extend(top.children)
+    # def dfs(self):
+    #     stack: List[MCTSNode] = [self]
+    #     while stack:
+    #         top = stack.pop()
+    #         yield top
+    #         stack.extend(top.children)
 
     # def tree_to_text(self, filename: str = "tree.txt"):
     #     from treelib import Tree
