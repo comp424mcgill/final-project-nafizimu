@@ -214,31 +214,31 @@ class MCTSNode:
             yield top
             stack.extend(top.children)
 
-    def tree_to_text(self, filename: str = "tree.txt"):
-        from treelib import Tree
+    # def tree_to_text(self, filename: str = "tree.txt"):
+    #     from treelib import Tree
 
-        tree = Tree()
+    #     tree = Tree()
 
-        for node in self.dfs():
-            tree.create_node(
-                str(node), id(node), parent=id(node.parent) if node.parent else None
-            )
+    #     for node in self.dfs():
+    #         tree.create_node(
+    #             str(node), id(node), parent=id(node.parent) if node.parent else None
+    #         )
 
-        tree.save2file(filename)
+    #     tree.save2file(filename)
 
-    def to_svg(self, filename: str = "tree"):
-        import graphviz
+    # def to_svg(self, filename: str = "tree"):
+    #     import graphviz
 
-        dot = graphviz.Digraph()
-        dot.attr(overlap="false")
-        dot.attr(ranksep="1")
+    #     dot = graphviz.Digraph()
+    #     dot.attr(overlap="false")
+    #     dot.attr(ranksep="1")
 
-        for node in self.dfs():
-            dot.node(str(id(node)), node.__str_for_node())
-            if node.parent:
-                dot.edge(str(id(node.parent)), str(id(node)))
+    #     for node in self.dfs():
+    #         dot.node(str(id(node)), node.__str_for_node())
+    #         if node.parent:
+    #             dot.edge(str(id(node.parent)), str(id(node)))
 
-        dot.render(filename, cleanup=True, format="svg")
+    #     dot.render(filename, cleanup=True, format="svg")
 
 
 @register_agent("student_agent")
@@ -448,7 +448,7 @@ class StudentAgent(Agent):
 
         while time.time_ns() < StudentAgent.end_time:
             # while True:
-            root.to_svg()
+            # root.to_svg()
             root.tree_policy(chess_board, max_step)
 
         print("time: " + str((time.time_ns() - start_time) / (10**9)))
