@@ -101,6 +101,12 @@ We also perform iteration instead of recursion to avoid stack overflow and some 
 
 \section{Possible Improvement}
 
+There are a few possible improvements that can be made in the Monte-Carlo Tree Search.
+The simplest improvement that can be made is to prioritize adjacent state spaces that would add a wall that is connected to another wall.
+This would maximize the value of the children nodes since a human player would intuitively place a wall that is connected to another wall to quickly create a closed region.
+Another possible optimization is to reuse an existing Monte-Carlo tree search.
+This would allow us to take advantage of the 30 seconds in the first round to build a large search tree and then reuse a subsection of the tree with some probability to avoid rebuilding an entire tree for the subsequent rounds.
+
 \section{Report}
 
 You are required to write a report with a detailed explanation of your approach and reasoning. The report must be a typed PDF file, and should be free of spelling and grammar errors. The suggested length is between 4 and 8 pages, but the most important constraint is that the report be clear and concise. You should use the source of this document \footnote{You can find the source of this document in Overleaf here: \href{https://www.overleaf.com/read/gcpfjdpqpytp}{https://www.overleaf.com/read/gcpfjdpqpytp}. You would need to create an Overleaf account. Copy this project and create a new project to write your report. Replace the \texttt{author} information with your own group information.} as a template to write your report in \LaTeX.  The report must include the following required components:
