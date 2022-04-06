@@ -94,28 +94,48 @@ For example, we would modify the original copy of the chessboard and then undo t
 We also perform iteration instead of recursion to avoid stack overflow and some overheads related to managing call stack.
 
 \section{Theory}
-The basic idea we used of our implementation is the Monte Carlo Tree Search (MCTS) method.
-By using Monte Carlo Method (MCM), our agent could use the results from random simulations to quickly obtain a reasonable estimation of the win rate of each of its options.
-Then, by combining these estimations and creating an Upper Confidence Tree (UCT), our agent can quickly grasp an idea of which option should it take for its next move. 
-As the game progress, the number of options our agent have reduces, which makes MCTS able to create a taller UCT. 
-Since the deeper the UCT, the more simulations the agent gets to do, the agent's estination becomes more accurate as the height of UCT grows.
+The basic idea we used for our implementation is the Monte Carlo Tree Search (MCTS) method.
+By using Monte Carlo Method (MCM) inside MTCS, our agent could use the results from random simulations to quickly obtain a reasonable estimation of the win rate of each of its options.
+Then, by combining these estimations and creating an Upper Confidence Tree (UCT), our agent can quickly grasp an idea of which option should it take for its next move.
+During the entire allowed time, our agent keeps performing MCTS to reinforce its guesses and expand the UCT.
+Once the allowed time is about to end, it validats the possible steps it could take, and greedily selects a final decision which could maximize its win rate.
+As the game progress, the number of options our agent have reduces, which makes MCTS able to create a taller UCT in the given time. 
+Since the deeper the UCT, the more simulations the agent gets to do, the agent's estination becomes more accurate as the game progresses closer to the end.
 
-Because of the potential high branching factor when the board gets large (8-10), we incorporated more randomness to the MCTS we learned in class. 
+Because of the potential high branching factor when the board gets large (around 8-10), we incorporated more randomness to the MCTS we learned in class. 
 Instead of going through all the possible options each time, our agent only explore on roughly half of the options. 
-By doing so, the agent could get to a deeper depth with exploitation, which makes its estimation less of a product of luck and more of a reliable estimation.
+By doing so, the agent could get to a deeper depth with exploitation, which makes its guesses less of a product of luck and more of a reliable estimation.
 
 \section{Analysis}
 As mentioned in the theory section, our agent mainly follows MCTS method. 
 We made some changes to the normal MCTS so it favors exploitation over exploration. 
-And, we gave it a internal "time limit" for it so it always finishes its decision within the allowed time.
+And, we gave it a internal "time limit", so it always finishes its decision within the allowed time.
 
 \subsection{Advantages}
 One of the main advantages of our agent is that it is unlikely to take more than the allowed time to select a move. 
-In other words, we configured our agent so that it has a low "misplay rate". 
-In order to do so we have to sacrifice some of the exploration options. This means that our agent might miss some really good opportunities to close the game off. 
-But mroe generally speaking, this could make our agent always walk on a path that favors our win a little bit more, and we believe this trade off between risk and consistency is worth it.
+In other words, we configured our agent so that it has a low "misplay rate".
+(This is because whenever the agent goes overtime, it will be forced to choose a random move.)
+In order to do so we have to sacrifice some of the exploration options. 
+This means that our agent might miss some really good opportunities to close the game off. 
+But more generally speaking, this could make our agent always walk on a path that favors our win a little bit more, and we believe this trade off between risk and consistency is worth it.
+
+In addition, since our implementation did not any built-in static variable (except the time constraints), our agent could be used in maps that are larger than the 10x10 limit. 
+The performance of the agent will decrease as the area of the map gets larger, and when facing a very large map, the agent might not be able to return an answer in 2 seconds.
+But with some simple tweaking of variables, the agent should be able to work in larger scale.
 
 \subsection{Disadvantages}
+The biggest issue with our agent comes from the possibility of it missing some winning steps.
+Since we are not exploring all the possible steps, and we are randomly choosing the steps that we want to evaluate, the chance of our agent misses its oppotunities is fairly high.
+To solve this issue, we implemented a simple mechanism where if the number of all possible steps is small enough, our agent will evaluates all of them.
+This mechanism gives our agent a higher chance of "noticing" the winning moves when the chessboard is filled with walls, so it helps our agent a lot during late game. 
+However, this implementation doesn't solve all the issues. 
+The agent still could miss some good opportunities during the early stage of a game.
+
+The fact that it isn't playing optimally in the early stage isn't ideal, but it is not unacceptable.
+Our agent will become a lot more "deadly" during the late game, and it will not miss any opportunity by then, thus we think it is acceptable to miss some win potentials and trade it for consistency. 
+As mentioned previously, our agent will always do a move that favors its win.
+We believe by accumulating this advantage, our agent could slowly but steadily reach the winning state.
+
 \subsection{Failure Modes}
 
 \section{Other Approach}
