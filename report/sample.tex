@@ -83,9 +83,9 @@ This allows the tree policy to expand other nodes that are not finished.
 \texttt{back\_propagation} performs the back propagation to update the score of predecessors during a default policy of MCTS.
 
 \texttt{best\_child} returns the best direct child of an \texttt{MCTSNode}.
-If the \texttt{greedy} argument is \texttt{False}, then it will pick the child with the highest win/round ratio;
+If the \texttt{greedy} argument is \texttt{True}, then it will pick the child with the highest win/round ratio;
 otherwise, it will perform Upper Confidence Tree with a scaling constant of \(\sqrt{2}\) to maintain balance between exploration and exploitation.
-\texttt{greedy} is \texttt{True} when performing default policy, and \texttt{False} when picking the best next position and direction at the end of MCTS.
+\texttt{greedy} is \texttt{False} when performing default policy, and \texttt{True} when picking the best next position and direction at the end of MCTS.
 
 \texttt{monte\_carlo\_method} performs a single Monte-Carlo method and returns the score of the simulation.
 
