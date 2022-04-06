@@ -125,8 +125,11 @@ But mroe generally speaking, this could make our agent always walk on a path tha
 There are a few possible improvements that can be made in the Monte-Carlo Tree Search.
 The simplest improvement that can be made is to prioritize adjacent state spaces that would add a wall that is connected to another wall.
 This would maximize the value of the children nodes since a human player would intuitively place a wall that is connected to another wall to quickly create a closed region.
+However, we should still allow other state spaces that do not connect walls;
+for example, placing an unconnected wall can prevent the adversary from winning by forcing it to take extra step.
 Another possible optimization is to reuse an existing Monte-Carlo tree search.
-This would allow us to take advantage of the 30 seconds in the first round to build a large search tree and then reuse a subsection of the tree with some probability to avoid rebuilding an entire tree for the subsequent rounds.
+This would allow us to take advantage of the 30 seconds in the first round to build a large search tree and then reuse a subsection of the tree to avoid rebuilding an entire tree for the subsequent rounds.
+Nonetheless, this might not be effective because the branching factor of the game is very large, so the likelihood that the adversary will visit an already expanded node might be low. 
 
 \section{Report}
 
