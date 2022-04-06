@@ -94,8 +94,18 @@ For example, we would modify the original copy of the chessboard and then undo t
 We also perform iteration instead of recursion to avoid stack overflow and some overheads related to managing call stack.
 
 \section{Theory}
+The basic idea we used of our implementation is the Monte Carlo Tree Search (MCTS) method. By using Monte Carlo Method (MCM), our agent could use the results from random simulations to quickly obtain a reasonable estimation of the win rate of each of its options. Then, by combining these estimations and creating an Upper Confidence Tree (UCT), our agent can quickly grasp an idea of which option should it take for its next move. As the game progress, the number of options our agent have reduces, which makes MCTS able to create a taller UCT. Since the deeper the UCT, the more simulations the agent gets to do, the agent's estination becomes more accurate as the height of UCT grows.\\
+
+Because of the potential high branching factor when the board gets large (8-10), we incorporated more randomness to the MCTS we learned in class. Instead of going through all the possible options each time, our agent only explore on roughly half of the options. By doing so, the agent could get to a deeper depth with exploitation, which makes its estimation less of a product of luck and more of a reliable estimation.
 
 \section{Analysis}
+As mentioned in the theory section, our agent mainly follows MCTS method. We made some changes to the normal MCTS so it favors exploitation over exploration. And, we gave it a internal "time limit" for it so it always finishes its decision within the allowed time.
+
+\subsection{Advantages}
+One of the main advantages of our agent is that it is unlikely to take more than the allowed time to select a move. In other words, we configured our agent so that it has a low "misplay rate". In order to do so we have to sacrifice some of the exploration options. This means that our agent might miss some really good opportunities to close the game off. But mroe generally speaking, this could make our agent always walk on a path that favors our win a little bit more, and we believe this trade off between risk and consistency is worth it.
+
+\subsection{Disadvantages}
+\subsection{Failure Modes}
 
 \section{Other Approach}
 
