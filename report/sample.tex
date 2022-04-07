@@ -40,9 +40,9 @@ Our agent is a Python module named \texttt{student\_agent.py} that consists of c
 \subsection{\texttt{StudentAgent}}
 
 \texttt{StudentAgent} is the entry point of the module for the \textit{Colosseum Survival!} game.
-It consists of the \texttt{\_\_init\_\_} method to construct the agent, helper functions, global variables, and a \texttt{step} method.
+It consists of the \texttt{\_\_init\_\_()} method to construct the agent, helper functions, global variables, and a \texttt{step()} method.
 
-\texttt{\_\_init\_\_} initializes variables including \texttt{self.is\_first\_round} which is \texttt{True} if the current turn is the first turn.
+\texttt{\_\_init\_\_()} initializes variables including \texttt{self.is\_first\_round} which is \texttt{True} if the current turn is the first turn.
 
 The \texttt{step()} method is one of the public interface for the \textit{Colosseum Survival!} game to make a decision for a single turn.
 The method sets \texttt{StudentAgent.end\_time} to the time when the MCTS should stop searching, calls \texttt{StudentAgent.mcts()}, and then returns the most optimal next position and direction discovered.
@@ -92,9 +92,9 @@ otherwise, it will calculate the Upper Confidence Tree value with a scaling cons
 
 \texttt{monte\_carlo\_method()} performs a single Monte-Carlo method and returns a tuple which contains the score of the simulation.
 
-There have been some consistent strategies we have applied to minimize overheads of simulating multiple games with default policy, \texttt{tree\_policy} and \texttt{monte\_carlo\_method}.
+There have been some consistent strategies we have applied to minimize overheads of simulating multiple games with default policy, \texttt{tree\_policy()} and \texttt{monte\_carlo\_method()}.
 For example, we would modify the original copy of the chessboard and then undo the changes to avoid overhead related to copying large data.
-We also perform iteration instead of recursion to avoid stack overflow and some overheads related to managing call stack.
+We also perform iteration instead of recursion to avoid stack overflow, and some overheads related to managing call stack.
 
 \section{Theory}
 The basic idea we used for our implementation is the Monte Carlo Tree Search (MCTS) method.
