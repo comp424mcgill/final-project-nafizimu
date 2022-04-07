@@ -12,6 +12,8 @@
 % Definitions of handy macros can go here
 \usepackage{subfig}
 \usepackage[skip=1em, indent=0pt]{parskip}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
 \newcommand{\dataset}{{\cal D}}
 \newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
 
@@ -140,8 +142,8 @@ We believe by accumulating this advantage, our agent could slowly but steadily r
 The most common failure case is that in some early state, the agent missed the chance to finish the opponent, then it proceeded to move in to a position that it thought would be beneficial, but actually let the oppoent escape.
 
 The following images shows one occurence of this failure:\\
-\includegraphics[width=0.5\textwidth]{images/b_skip_1.png}
-\includegraphics[width=0.5\textwidth]{images/b_skip_2.png}
+\includegraphics[width=0.5\textwidth]{b_skip_1.png}
+\includegraphics[width=0.5\textwidth]{b_skip_2.png}
 
 As explained previously, this failure occurs because of the incompleteness of the options of our agent.
 As of our current implementation, there is no way to completely remove this failure without harming the searching time.
