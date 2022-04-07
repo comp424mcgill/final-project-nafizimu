@@ -113,6 +113,15 @@ K stands for the max number of steps the agent is allowed to take.
 	4\times\left(1 + 4\sum_{n=1}^{K}{n}\right)
 \end{equation}
 
+\begin{table}[!ht]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+		\hline
+		K & 2 & 3 & 4 & 5  \\ \hline
+		\# of branches & 20 & 52 & 100 & 164  \\ \hline
+	\end{tabular}
+\end{table}
+
 Because of the potential high branching factor when the board gets large (around 8-10), we incorporated more randomness to the MCTS we learned in class. 
 Instead of going through all the possible options each time, our agent only explore on roughly half of the options. 
 By doing so, the agent could get to a deeper depth with exploitation, which makes its guesses less of a product of luck and more of a reliable estimation.
