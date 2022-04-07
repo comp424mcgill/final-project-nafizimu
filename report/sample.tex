@@ -13,6 +13,7 @@
 \usepackage{subfig}
 \usepackage[skip=1em, indent=0pt]{parskip}
 \usepackage{graphicx}
+\usepackage{amsmath}
 \graphicspath{ {./images/} }
 \newcommand{\dataset}{{\cal D}}
 \newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
@@ -100,9 +101,17 @@ The basic idea we used for our implementation is the Monte Carlo Tree Search (MC
 By using Monte Carlo Method (MCM) inside MTCS, our agent could use the results from random simulations to quickly obtain a reasonable estimation of the win rate of each of its options.
 Then, by combining these estimations and creating an Upper Confidence Tree (UCT), our agent can quickly grasp an idea of which option should it take for its next move.
 During the entire allowed time, our agent keeps performing MCTS to reinforce its guesses and expand the UCT.
-Once the allowed time is about to end, it validats the possible steps it could take, and greedily selects a final decision which could maximize its win rate.
+Once the allowed time is about to end, it validates the possible steps it could take, and greedily selects a final decision which could maximize its win rate.
 As the game progress, the number of options our agent have reduces, which makes MCTS able to create a taller UCT in the given time. 
-Since the deeper the UCT, the more simulations the agent gets to do, the agent's estination becomes more accurate as the game progresses closer to the end.
+Since the deeper the UCT, the more simulations the agent gets to do, the agent's estimation becomes more accurate as the game progresses closer to the end.
+
+The number of possible states (position and wall at that position) at each turn could be calculated using the following formula.
+For simplicity of calculation, we ignore the walls that are existing in the following formula.
+K stands for the max number of steps the agent is allowed to take.
+
+\begin{equation}
+	4\times\left(1 + 4\sum_{n=1}^{K}{n}\right)
+\end{equation}
 
 Because of the potential high branching factor when the board gets large (around 8-10), we incorporated more randomness to the MCTS we learned in class. 
 Instead of going through all the possible options each time, our agent only explore on roughly half of the options. 
@@ -110,7 +119,7 @@ By doing so, the agent could get to a deeper depth with exploitation, which make
 
 \section{Analysis}
 As mentioned in the theory section, our agent mainly follows MCTS method. 
-We made some changes to the normal MCTS so it favors exploitation over exploration. 
+We made some changes to the normal MCTS so it favours exploitation over exploration. 
 And, we gave it a internal "time limit", so it always finishes its decision within the allowed time.
 
 \subsection{Advantages}
@@ -119,7 +128,7 @@ In other words, we configured our agent so that it has a low "misplay rate".
 (This is because whenever the agent goes overtime, it will be forced to choose a random move.)
 In order to do so we have to sacrifice some of the exploration options. 
 This means that our agent might miss some really good opportunities to close the game off. 
-But more generally speaking, this could make our agent always walk on a path that favors our win a little bit more, and we believe this trade off between risk and consistency is worth it.
+But more generally speaking, this could make our agent always walk on a path that favours our win a little bit more, and we believe this trade off between risk and consistency is worth it.
 
 In addition, since our implementation did not any built-in static variable (except the time constraints), our agent could be used in maps that are larger than the 10x10 limit. 
 The performance of the agent will decrease as the area of the map gets larger, and when facing a very large map, the agent might not be able to return an answer in 2 seconds.
@@ -127,7 +136,7 @@ But with some simple tweaking of variables, the agent should be able to work in 
 
 \subsection{Disadvantages}
 The biggest issue with our agent comes from the possibility of it missing some winning steps.
-Since we are not exploring all the possible steps, and we are randomly choosing the steps that we want to evaluate, the chance of our agent misses its oppotunities is fairly high.
+Since we are not exploring all the possible steps, and we are randomly choosing the steps that we want to evaluate, the chance of our agent misses its opportunities is fairly high.
 To solve this issue, we implemented a simple mechanism where if the number of all possible steps is small enough, our agent will evaluates all of them.
 This mechanism gives our agent a higher chance of "noticing" the winning moves when the chessboard is filled with walls, so it helps our agent a lot during late game. 
 However, this implementation doesn't solve all the issues. 
@@ -135,13 +144,13 @@ The agent still could miss some good opportunities during the early stage of a g
 
 The fact that it isn't playing optimally in the early stage isn't ideal, but it is not unacceptable.
 Our agent will become a lot more "deadly" during the late game, and it will not miss any opportunity by then, thus we think it is acceptable to miss some win potentials and trade it for consistency. 
-As mentioned previously, our agent will always do a move that favors its win.
+As mentioned previously, our agent will always do a move that favours its win.
 We believe by accumulating this advantage, our agent could slowly but steadily reach the winning state.
 
 \subsection{Failure Modes}
-The most common failure case is that in some early state, the agent missed the chance to finish the opponent, then it proceeded to move in to a position that it thought would be beneficial, but actually let the oppoent escape.
+The most common failure case is that in some early state, the agent missed the chance to finish the opponent, then it proceeded to move in to a position that it thought would be beneficial, but actually let the opponent escape.
 
-The following images shows one occurence of this failure:\\
+The following images shows one occurrence of this failure:\\
 \includegraphics[width=0.5\textwidth]{b_skip_1.png}
 \includegraphics[width=0.5\textwidth]{b_skip_2.png}
 
