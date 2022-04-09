@@ -36,6 +36,8 @@ class MCTSNode:
         d_round = 0
         d_win = 0
 
+        # start of default policy
+
         if self.parent:
             StudentAgent.set_wall(chess_board, self.my_pos, self.my_dir, True)
 
@@ -59,7 +61,10 @@ class MCTSNode:
 
     def tree_policy(
         self, chess_board, max_step
-    ):  # returns me the list of children of the best-so-far node
+    ):
+        """
+        Performs tree policy to update the win-rate of the most optimal path
+        """
         path = [self]
         while path[-1].children:
             best_node = path[-1].best_child()
@@ -110,6 +115,9 @@ class MCTSNode:
             StudentAgent.set_wall(chess_board, node.my_pos, node.my_dir, False)
 
     def back_propagation(self, d_round, d_win):
+        """
+        Performs back-propagation to update win-ratio of all predecessors
+        """
         node = self
         while node.parent:
             node.parent.win += d_win
@@ -117,6 +125,10 @@ class MCTSNode:
             node = node.parent
 
     def best_child(self, greedy=False):
+        """
+        Returns the best child. If greedy is True, return the child with highest win-rate.
+        Otherwise, pick the next child based on UCT.
+        """
         def uct_cal(child: "MCTSNode"):  # cur/next_data: (win_cnt, total_round)
             if greedy:
                 return child.win / child.round
@@ -195,6 +207,8 @@ class MCTSNode:
                 chess_board, lucky_pos, lucky_dir, True
             )
             stack.append(StackFrame(lucky_pos, lucky_dir, adv_pos))
+
+    # Codes used to debug MCTS visually
 
     # def __str__(self) -> str:
     #     return f"{self.my_pos}:{self.my_dir}:{self.adv_pos}:{self.is_adv}:{self.win}/{self.round}"
@@ -306,6 +320,10 @@ class StudentAgent(Agent):
         max_step: int = 100,
         adv_pos: Tuple[int, int] = None,
     ):
+        """
+        Performs Breath-first Search and returns a sequence of (# of step, position) from the my_pos up to max_step.
+        If adv_pos given, then it will avoid adv_pos
+        """
         MOVES: List[Tuple[int, Tuple[int, int]]] = list(
             enumerate(StudentAgent.directions)
         )
@@ -341,6 +359,11 @@ class StudentAgent(Agent):
 
     @staticmethod
     def greedy_search(chess_board, a: Tuple[int, int], b: Tuple[int, int]):
+        """
+        Performs greedy search and returns a sequence of (# of steps, position) starting at 'a'.
+        It will pick the next position closest to 'b'.
+        There is no step limit, so it can explore the entire region.
+        """
         def dist(a, b):
             return int(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
@@ -381,6 +404,10 @@ class StudentAgent(Agent):
 
     @staticmethod
     def game_score(chess_board, my_pos, adv_pos, isAdv=False):
+        """
+        It returns the score of players at my_pos and adv_pos as a tuple if they are on separate regions.
+        Otherwise, it returns None.
+        """
         total_tiles = len(chess_board) * len(chess_board[0])
         total_visited = 0
 
@@ -407,6 +434,11 @@ class StudentAgent(Agent):
 
     @staticmethod
     def set_wall(chess_board, pos, dir: int, wall: bool):
+        """
+        Sets the wall at pos towards dir.
+        Sets the second wall at the opposite position and direction.
+        It returns True if both ends of the wall is connected to another wall.
+        """
         # assert chess_board[pos[0], pos[1], dir] != wall
         chess_board[pos[0], pos[1], dir] = wall
 
@@ -444,7 +476,11 @@ class StudentAgent(Agent):
 
     @staticmethod
     def mcts(chess_board, my_pos, adv_pos, max_step):
-        start_time = time.time_ns()
+        """
+        Performs mcts and returns the best next position and direction discovered.
+        """
+
+        # start_time = time.time_ns()
         root = MCTSNode(my_pos, -1, adv_pos, chess_board, max_step)
 
         while time.time_ns() < StudentAgent.end_time:
@@ -452,7 +488,7 @@ class StudentAgent(Agent):
             # root.to_svg()
             root.tree_policy(chess_board, max_step)
 
-        print("time: " + str((time.time_ns() - start_time) / (10**9)))
+        # print("time: " + str((time.time_ns() - start_time) / (10**9)))
 
         best_point = root.best_child(True)
         return (best_point.my_pos, best_point.my_dir)
