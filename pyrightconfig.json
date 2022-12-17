@@ -1,0 +1,9 @@
+{
+    "exclude": [
+        "report",
+	".vscode"
+    ],
+    "venvPath": ".",
+    "venv": "env",
+    "pythonVersion": "3.11"
+}
