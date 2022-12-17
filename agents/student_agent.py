@@ -254,6 +254,86 @@ class MCTSNode:
 
     #     dot.render(filename, cleanup=True, format="svg")
 
+class FordFulkerson:
+    '''
+    https://en.wikipedia.org/wiki/Ford%E2%80%93Fulkerson_algorithm#Python_implementation_of_Edmonds%E2%80%93Karp_algorithm
+
+    This class represents a directed graph using
+    adjacency matrix representation.
+    '''
+
+    def __init__(self, graph):
+        self.graph = graph  # residual graph
+        self.row = len(graph)
+
+    def bfs(self, s, t, parent):
+        '''
+        Returns true if there is a path from
+        source 's' to sink 't' in residual graph.
+        Also fills parent[] to store the path.
+        '''
+        import collections
+
+        # Mark all the vertices as not visited
+        visited = [False] * self.row
+
+        # Create a queue for BFS
+        queue = collections.deque()
+
+        # Mark the source node as visited and enqueue it
+        queue.append(s)
+        visited[s] = True
+
+        # Standard BFS loop
+        while queue:
+            u = queue.popleft()
+
+            # Get all adjacent vertices of the dequeued vertex u
+            # If an adjacent has not been visited, then mark it
+            # visited and enqueue it
+            for ind, val in enumerate(self.graph[u]):
+                if (visited[ind] == False) and (val > 0):
+                    queue.append(ind)
+                    visited[ind] = True
+                    parent[ind] = u
+
+        # If we reached sink in BFS starting from source, then return
+        # true, else false
+        return visited[t]
+
+    # Returns the maximum flow from s to t in the given graph
+    def edmonds_karp(self, source, sink):
+
+        # This array is filled by BFS and to store path
+        parent = [-1] * self.row
+
+        max_flow = 0  # There is no flow initially
+
+        # Augment the flow while there is path from source to sink
+        while self.bfs(source, sink, parent):
+
+            # Find minimum residual capacity of the edges along the
+            # path filled by BFS. Or we can say find the maximum flow
+            # through the path found.
+            path_flow = float("Inf")
+            s = sink
+            while s != source:
+                path_flow = min(path_flow, self.graph[parent[s]][s])
+                s = parent[s]
+
+            # Add path flow to overall flow
+            max_flow += path_flow
+
+            # update residual capacities of the edges and reverse edges
+            # along the path
+            v = sink
+            while v != source:
+                u = parent[v]
+                self.graph[u][v] -= path_flow
+                self.graph[v][u] += path_flow
+                v = parent[v]
+
+        return max_flow
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
@@ -292,33 +372,19 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        # return StudentAgent.alpha_beta_pruning(
-        #     chess_board,
-        #     my_pos,
-        #     adv_pos,
-        #     2,
-        #     2,
-        #     max_step,
-        #     True,
-        #     20,
-        #     -sys.maxsize,
-        #     sys.maxsize,
-        # )
+        graph = StudentAgent.bfs_gen_graph(chess_board, my_pos, adv_pos)*100
+        graph_after = graph.copy()
+        ff = FordFulkerson(graph_after)
+        ff.edmonds_karp(my_pos, adv_pos)
 
-        if self.is_first_round:
-            self.is_first_round = False
-            StudentAgent.end_time = time.time_ns() + THIRTY_SEC
-            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step)
-        else:
-            StudentAgent.end_time = time.time_ns() + TWO_SEC
-            return StudentAgent.mcts(chess_board, my_pos, adv_pos, max_step)
+        return None
 
     @staticmethod
     def bfs(
         chess_board,
         my_pos: Tuple[int, int],
         max_step: int = 100,
-        adv_pos: Tuple[int, int] = None,
+        adv_pos: Tuple[int, int] | None = None,
     ):
         """
         Performs Breath-first Search and returns a sequence of (# of step, position) from the my_pos up to max_step.
@@ -356,6 +422,45 @@ class StudentAgent(Agent):
                     # assert not all(chess_board[new_pos[0]][new_pos[1]])
                     q.append((step + 1, new_pos))
                     visited.add(new_pos)
+
+    @staticmethod
+    def bfs_gen_graph(
+        chess_board,
+        s: Tuple[int, int],
+        t: Tuple[int, int],
+    ):
+        """
+        Performs Breath-first Search and returns a sequence of (# of step, position) from the my_pos up to max_step.
+        If adv_pos given, then it will avoid adv_pos
+        """
+        row = len(chess_board)
+        total_tiles = len(chess_board) * len(chess_board[0])
+        graph = np.zeros((total_tiles, total_tiles), dtype=int)
+
+        # Create a queue for BFS
+        queue = deque([s])
+
+        # Standard BFS loop
+        while queue:
+            x, y = queue.popleft()
+
+            for dir_idx, (dy, dx) in enumerate(StudentAgent.directions):
+                nx = x + dx
+                ny = y + dy
+                if not (0 <= nx < chess_board.shape[1]):
+                    continue
+                if not (0 <= ny < chess_board.shape[0]):
+                    continue
+                if chess_board[y, x, dir_idx]:
+                    continue
+                if graph[ny*row + nx][y*row + x] > 0:
+                    # visited
+                    continue
+                graph[y*row + x][ny*row + nx] = 1
+                if (ny, nx) != t:
+                    queue.append((ny, nx))
+
+        return graph
 
     @staticmethod
     def greedy_search(chess_board, a: Tuple[int, int], b: Tuple[int, int]):
